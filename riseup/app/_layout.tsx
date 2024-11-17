@@ -1,16 +1,12 @@
 // app/_layout.tsx
 import React from 'react';
-import { Stack, Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 
-export default function RootLayout() {
+export default function Layout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false, // Hides the header for all routes
-      }}
-    >
-      {/* Ensure Slot is used correctly */}
-      <Slot />
+    <Stack initialRouteName="authentication/login">
+      <Stack.Screen name="authentication/login" options={{ headerShown: false }} />
+      <Stack.Screen name="authentication/registration" options={{ headerShown: false }} />
     </Stack>
   );
 }
