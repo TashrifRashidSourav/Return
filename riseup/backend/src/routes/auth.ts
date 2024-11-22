@@ -18,12 +18,13 @@ router.post('/signup', async (req: Request, res: Response) => {
 });
 
 // Login
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
     }
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
     res.json({ token });
