@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { connectDB } from './config/db';
 import registerRoute from './routes/register';
+import loginRoute from './routes/login';
 import cors from 'cors';
 
 // Load environment variables
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 
 // Add the registration route
 app.use('/api', registerRoute);
+app.use('/api', loginRoute); 
 
 // Start the server
 const PORT = process.env.PORT || 5000;
