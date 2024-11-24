@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,15 +12,37 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as Network from 'expo-network';
 
 const RegistrationScreen = () => {
   const router = useRouter();
+  const [baseURL, setBaseURL] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSignUp = async () => {
+  useEffect(() => {
+    // Fetch the IP address using expo-network
+    const fetchIPAddress = async () => {
+      try {
+        const ipAddress = await Network.getIpAddressAsync();
+        if (ipAddress) {
+          const apiBase = `http://${ipAddress}:5000/api`;
+          setBaseURL(apiBase);
+        } else {
+          Alert.alert('Error', 'Unable to fetch IP address.');
+        }
+      } catch (error) {
+        console.error('Error fetching IP address:', error);
+        Alert.alert('Error', 'Failed to fetch the IP address.');
+      }
+    };
+
+    fetchIPAddress();
+  }, []);
+
+  const handleRegistration = async () => {
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert('Error', 'All fields are required!');
       return;
@@ -32,7 +54,7 @@ const RegistrationScreen = () => {
     }
 
     try {
-      const response = await fetch('http://192.168.0.102:5000/api/register', {
+      const response = await fetch(`${baseURL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -43,7 +65,7 @@ const RegistrationScreen = () => {
       const result = await response.json();
       if (response.ok) {
         Alert.alert('Success', 'Registration successful!');
-        router.push('/authentication/login');
+        router.push('/login'); // Redirect to the login screen
       } else {
         Alert.alert('Error', result.message || 'Registration failed.');
       }
@@ -108,8 +130,19 @@ const RegistrationScreen = () => {
               />
             </View>
 
-            <TouchableOpacity style={styles.registerButton} onPress={handleSignUp}>
-              <Text style={styles.registerButtonText}>SIGN UP</Text>
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={handleRegistration}
+            >
+              <Text style={styles.registerButtonText}>REGISTER</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push('/authentication/login')}
+            >
+              <Text style={styles.loginLink}>
+                Already have an account? Login
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -146,7 +179,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   registerButton: {
-    backgroundColor: '#28A745',
+    backgroundColor: '#007BFF',
     borderRadius: 10,
     paddingVertical: 15,
     alignItems: 'center',
@@ -157,6 +190,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  loginLink: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#007BFF',
+    fontSize: 16,
   },
 });
 
