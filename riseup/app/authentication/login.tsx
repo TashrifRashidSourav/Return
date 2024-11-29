@@ -28,7 +28,7 @@ const LoginScreen = () => {
         console.log('Detected IP Address:', ipAddress); // Log the IP address
     
         if (ipAddress) {
-          const apiBase = `http://10.15.52.0:5000/api`;
+          const apiBase = `http://10.15.17.245:5000/api`;
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -108,7 +108,7 @@ const LoginScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push('/authentication/register')}
+              onPress={() => router.push('/authentication/registration')}
             >
               <Text style={styles.registerLink}>
                 Don't have an account? Sign Up
