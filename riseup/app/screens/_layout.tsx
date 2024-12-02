@@ -1,9 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Slot } from 'expo-router';
-
 const Tab = createBottomTabNavigator();
-
 export default function Layout() {
   return (
     <Tab.Navigator

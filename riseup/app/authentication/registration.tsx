@@ -23,12 +23,13 @@ const RegistrationScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
-    // Fetch the IP address using expo-network
     const fetchIPAddress = async () => {
       try {
         const ipAddress = await Network.getIpAddressAsync();
+        console.log('Detected IP Address:', ipAddress);
+
         if (ipAddress) {
-          const apiBase = `http://${ipAddress}:5000/api`;
+          const apiBase = `http://10.15.17.245:5000/api`; // Replace with dynamic assignment if required
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -65,7 +66,7 @@ const RegistrationScreen = () => {
       const result = await response.json();
       if (response.ok) {
         Alert.alert('Success', 'Registration successful!');
-        router.push('/login'); // Redirect to the login screen
+        router.push('/authentication/login'); // Redirect to the login screen
       } else {
         Alert.alert('Error', result.message || 'Registration failed.');
       }
