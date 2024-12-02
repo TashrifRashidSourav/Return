@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { connectDB } from './config/db';
 import registerRoute from './routes/register';
 import loginRoute from './routes/login';
+import profileRoute from './routes/profile';
 import cors from 'cors';
 
 // Load environment variables
@@ -13,11 +14,11 @@ const app = express();
 
 // Enable CORS for specific origin (your frontend URL)
 app.use(cors({
-  origin: 'http://localhost:8081',  // Allow requests only from this origin
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  // Allow the necessary HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'],  // Allow specific headers
-  preflightContinue: false,  // Preflight requests are handled automatically by default
-  optionsSuccessStatus: 200  // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  origin: 'http://localhost:5000',  // Frontend running on localhost:3000
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 
 // Middleware for parsing JSON
@@ -31,9 +32,10 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// Add the registration route
+// Add the registration, login, and profile routes
 app.use('/api', registerRoute);
 app.use('/api', loginRoute); 
+app.use('/api', profileRoute); 
 
 // Start the server
 const PORT = process.env.PORT || 5000;

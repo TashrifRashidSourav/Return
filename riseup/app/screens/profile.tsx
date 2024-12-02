@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,48 @@ import {
   Alert,
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { useRouter } from 'expo-router';
 
 const EditProfileScreen = () => {
+  const router = useRouter();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [username, setUsername] = useState('yANCHUI');
-  const [email, setEmail] = useState('yanchui@gmail.com');
-  const [phone, setPhone] = useState('+14987889999');
-  const [password, setPassword] = useState('evFTbyWVCd');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const baseURL = 'http://10.15.17.245:5000/api'; // Adjust based on your server's URL.
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(`${baseURL}/profile`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Add any required auth headers here, e.g., Authorization: `Bearer ${token}`
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUsername(data.username);
+          setEmail(data.email);
+          setPhone(data.phone);
+          setProfilePicture(data.profilePicture || null); // Adjust based on your API response
+          setLoading(false);
+        } else {
+          Alert.alert('Error', 'Failed to fetch profile data');
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        Alert.alert('Error', 'Could not fetch user profile');
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleImagePicker = () => {
     launchImageLibrary(
@@ -34,10 +69,54 @@ const EditProfileScreen = () => {
       }
     );
   };
-  
-  const handleUpdate = () => {
-    Alert.alert('Profile Updated', 'Your changes have been saved successfully.');
+
+  const handleUpdate = async () => {
+    const formData = new FormData();
+
+    // If profilePicture exists, append it as a file
+    if (profilePicture) {
+      // formData.append('profilePicture', {
+      //   uri: profilePicture,
+      //   name: 'profilePicture.jpg',
+      //   type: 'image/jpeg',
+      // });
+    }
+    
+    // Append other form data (username, email, etc.)
+    formData.append('username', username);
+    formData.append('email', email);
+    formData.append('phone', phone);
+    formData.append('password', password);
+
+    try {
+      const response = await fetch(`${baseURL}/profile/update`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          // Add any required auth headers here, e.g., Authorization: `Bearer ${token}`
+        },
+      });
+
+      if (response.ok) {
+        Alert.alert('Profile Updated', 'Your changes have been saved successfully.');
+        router.push('/profile'); // Redirect to profile page after successful update.
+      } else {
+        Alert.alert('Error', 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', 'Could not update profile');
+    }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -49,7 +128,7 @@ const EditProfileScreen = () => {
           source={
             profilePicture
               ? { uri: profilePicture }
-              : require('../../assets/default-profile.png') // Add a placeholder image in the `assets` folder
+              : require('../../assets/default-profile.png') // Placeholder if no picture
           }
           style={styles.profileImage}
         />
@@ -66,7 +145,7 @@ const EditProfileScreen = () => {
           style={styles.input}
           value={email}
           onChangeText={setEmail}
-          placeholder="Email I'd"
+          placeholder="Email"
           keyboardType="email-address"
         />
         <TextInput
@@ -95,6 +174,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   header: {
