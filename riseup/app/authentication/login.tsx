@@ -28,7 +28,7 @@ const LoginScreen = () => {
         console.log('Detected IP Address:', ipAddress); // Log the IP address
     
         if (ipAddress) {
-          const apiBase = `http://10.10.201.3:5000/api`;
+          const apiBase = `http://10.15.52.0:5000/api`;
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -61,7 +61,7 @@ const LoginScreen = () => {
       const result = await response.json();
       if (response.ok) {
         Alert.alert('Success', 'Login successful!');
-        router.push('./profile'); // Redirect to dashboard or desired page
+        router.push('../screens/profile'); // Redirect to dashboard or desired page
       } else {
         Alert.alert('Error', result.message || 'Invalid credentials.');
       }
