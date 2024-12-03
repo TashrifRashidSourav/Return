@@ -28,7 +28,7 @@ const LoginScreen = () => {
         console.log('Detected IP Address:', ipAddress); // Log the IP address
     
         if (ipAddress) {
-          const apiBase = `http://10.15.17.245:5000/api`;
+          const apiBase = `http://192.168.0.111:5000/api`;
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');

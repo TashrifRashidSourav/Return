@@ -33,18 +33,18 @@ const verifyToken = (req: CustomRequest, res: Response, next: Function) => {
 };
 
 // Get user profile endpoint
-router.get('/profile', verifyToken, async (req: CustomRequest, res: Response) => {
+router.get('/profile/:id', async (req: CustomRequest, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: 'User not authenticated' });
-    }
-
-    console.log("User ID from token:", req.user.userId); // Log the userId from the token for debugging
-
+    // if (!req.user) {
+    //   return res.status(401).json({ message: 'User not authenticated' });
+    // }
+    const {id} = req.params;
+    // console.log("User ID from token:", req.user.userId); // Log the userId from the token for debugging
+    console.log(id,"calling with this!")
     // Find the user by their ID (from the token payload)
-    const user = await User.findById(req.user.userId).select('-password'); // Exclude password from the response
+    const user = await User.findById(id).select('-password'); // Exclude password from the response
     if (!user) {
-      console.log("User not found in the database for ID:", req.user.userId); // Log if no user is found
+      console.log("User not found in the database for ID:",id); // Log if no user is found
       return res.status(404).json({ message: 'Profile not found' });
     }
 
