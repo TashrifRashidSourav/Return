@@ -6,6 +6,8 @@ import registerRoute from './routes/register';
 import loginRoute from './routes/login';
 import profileRoute from './routes/profile';
 import { User } from './models/user';
+import jwt from 'jsonwebtoken';
+import profile from './routes/profile';
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +42,7 @@ app.get('/', (req, res) => {
 app.use('/api', registerRoute);
 app.use('/api', loginRoute);
 app.use('/api', profileRoute);
+app.use('/api', profile);
 
 // Handle not found routes
 app.use((req, res) => {

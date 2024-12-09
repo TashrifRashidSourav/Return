@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken'; // You will use this to generate a JWT token
-import { User } from '../models/user'; // Assuming you have a User model
+import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { User } from '../models/user'; // Assuming you have a User model
 
 // Load environment variables from .env file
 dotenv.config();
@@ -39,7 +39,7 @@ router.post('/login', async (req: Request, res: Response) => {
     // Create a JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email },
-      process.env.JWT_SECRET,  // Using the secret from environment variable
+      process.env.JWT_SECRET as string,  // Ensure JWT_SECRET is a string
       { expiresIn: '1h' } // Token expires in 1 hour
     );
 

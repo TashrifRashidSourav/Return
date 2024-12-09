@@ -13,6 +13,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Network from 'expo-network';
+import AsyncStorage from '@react-native-async-storage/async-storage';  // Add AsyncStorage for token storage
 
 const LoginScreen = () => {
   const router = useRouter();
@@ -26,9 +27,9 @@ const LoginScreen = () => {
       try {
         const ipAddress = await Network.getIpAddressAsync();
         console.log('Detected IP Address:', ipAddress); // Log the IP address
-    
+
         if (ipAddress) {
-          const apiBase = `http://192.168.0.111:5000/api`;
+          const apiBase = `http://10.15.21.89:5000/api`;  // Use dynamic IP
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -38,7 +39,6 @@ const LoginScreen = () => {
         Alert.alert('Error', 'Failed to fetch the IP address.');
       }
     };
-    
 
     fetchIPAddress();
   }, []);
@@ -60,8 +60,10 @@ const LoginScreen = () => {
 
       const result = await response.json();
       if (response.ok) {
+        // Store the JWT token in AsyncStorage
+        await AsyncStorage.setItem('authToken', result.token);  // Assuming 'token' is the response field
         Alert.alert('Success', 'Login successful!');
-        router.push('../screens/profile'); // Redirect to dashboard or desired page
+        router.push('../screens/profile'); // Redirect to profile or desired page
       } else {
         Alert.alert('Error', result.message || 'Invalid credentials.');
       }

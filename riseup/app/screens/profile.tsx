@@ -1,69 +1,189 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import axios from 'axios';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
-const UserProfile = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
+const EditProfileScreen = () => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        Alert.alert('Error', 'No token found, please login again.');
+        return;
+      }
+
+      const response = await fetch('http://localhost:5000/api/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch profile data');
+      }
+
+      const data = await response.json();
+      setUsername(data.name);
+      setEmail(data.email);
+      setPhoneNumber(data.phoneNumber || '');
+      setProfilePicture(data.profilePicture || null);
+    } catch (error) {
+      // Alert.alert('Error', error.message || 'Failed to load profile data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePicture = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('Permission Denied', 'You need to allow access to your gallery.');
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    // if (!pickerResult.cancelled) {
+    //   setProfilePicture(pickerResult.uri);
+    // }
+  };
+
+  const handleUpdate = async () => {
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        Alert.alert('Error', 'No token found, please login again.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('name', username);
+      formData.append('email', email);
+      formData.append('phoneNumber', phoneNumber);
+      if (profilePicture) {
+        formData.append('profilePicture', {
+          uri: profilePicture,
+          name: 'profile.jpg',
+          type: 'image/jpeg',
+        } as any);
+      }
+
+      const response = await fetch('http://localhost:5000/api/profile', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile');
+      }
+
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (error) {
+      // Alert.alert('Error', error.message || 'Failed to update profile.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = 'YOUR_JWT_TOKEN'; // Get the JWT token from your app storage (e.g., AsyncStorage)
-        const response = await axios.get('http://192.168.0.111:5000/api/profile', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setUser(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch user profile');
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, []);
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <Text>{error}</Text>
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#007BFF" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>User Profile</Text>
-      <Text>Name: {user.name}</Text>
-      <Text>Email: {user.email}</Text>
-      <Text>Created At: {new Date(user.createdAt).toLocaleDateString()}</Text>
-    </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.header} />
+      <View style={styles.profilePictureContainer}>
+        <TouchableOpacity onPress={handleChangePicture}>
+          <Image
+            // source={profilePicture ? { uri: profilePicture } : require('./assets/default-profile.png')}
+            style={styles.profilePicture}
+          />
+        </TouchableOpacity>
+        <Text style={styles.changePictureText}>Change Picture</Text>
+      </View>
+
+      <View style={styles.form}>
+        <Text style={styles.label}>Username</Text>
+        <TextInput
+          style={styles.input}
+          value={username}
+          onChangeText={setUsername}
+          placeholder="Enter username"
+        />
+
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Enter email"
+          keyboardType="email-address"
+        />
+
+        <Text style={styles.label}>Phone Number</Text>
+        <TextInput
+          style={styles.input}
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          placeholder="Enter phone number"
+          keyboardType="phone-pad"
+        />
+
+        <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
+          <Text style={styles.updateButtonText}>Update</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  contentContainer: { alignItems: 'center' },
+  header: { height: 150, width: '100%', backgroundColor: '#FF7466' },
+  profilePictureContainer: { marginTop: -75, alignItems: 'center' },
+  profilePicture: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: '#FFFFFF' },
+  changePictureText: { marginTop: 8, fontSize: 14, color: '#007BFF' },
+  form: { width: '90%', marginTop: 20 },
+  label: { fontSize: 16, marginBottom: 8, color: '#333333' },
+  input: { borderWidth: 1, borderColor: '#CCCCCC', borderRadius: 8, padding: 10, marginBottom: 20, backgroundColor: '#F9F9F9' },
+  updateButton: { backgroundColor: '#000000', paddingVertical: 15, borderRadius: 8, alignItems: 'center' },
+  updateButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
+  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' },
 });
 
-export default UserProfile;
+export default EditProfileScreen;
