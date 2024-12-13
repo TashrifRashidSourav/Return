@@ -1,63 +1,36 @@
-import express, { Request, Response } from 'express';
-import dotenv from 'dotenv';
+import express from 'express';
 import mongoose from 'mongoose';
-import { connectDB } from './config/db';
-import registerRoute from './routes/register';
-import loginRoute from './routes/login';
-import profileRoute from './routes/profile';
-import { User } from './models/user';
-import jwt from 'jsonwebtoken';
-import profile from './routes/profile';
+import dotenv from 'dotenv';
+import cors from 'cors';
 
 // Load environment variables
 dotenv.config();
 
+// Initialize Express app
 const app = express();
-
-// Middleware for parsing JSON
 app.use(express.json());
+app.use(cors());
 
-// Connect to MongoDB
-connectDB();
+// MongoDB connection
+const MONGO_URI = process.env.MONGO_URI || '';
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
-// Add manual CORS headers for every request
-app.use((req: Request, res: Response, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8081'); // Replace with your frontend's URL
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true'); // Enable credentials if needed
-  if (req.method === 'OPTIONS') {
-    // Preflight request, return a success response
-    return res.sendStatus(200);
-  }
-  next();
-});
 
-// Test route
-app.get('/', (req, res) => {
-  res.send('API is running...');
-});
+// Import routes
+import registrationRoutes from './routes/registration';
+import authenticationRoutes from './routes/authentication';
+import profileRoutes from './routes/profile';
 
-// Add the registration, login, and profile routes
-app.use('/api', registerRoute);
-app.use('/api', loginRoute);
-app.use('/api', profileRoute);
-app.use('/api', profile);
+// Use routes
+app.use('/register', registrationRoutes);
+app.use('/login', authenticationRoutes);
+app.use('/profile', profileRoutes);
 
-// Handle not found routes
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Not found',
-    errorMessages: [
-      {
-        path: req.originalUrl,
-        message: "API DOESN'T EXIST",
-      },
-    ],
-  });
-});
-
-// Start the server
+// Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

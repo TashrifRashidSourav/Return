@@ -2,8 +2,8 @@ import express, { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { User } from '../models/user'; // Assuming you have a User model
-
+// Assuming you have a User model
+import User  from '../models/user';
 // Load environment variables from .env file
 dotenv.config();
 

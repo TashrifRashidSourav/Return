@@ -1,39 +1,40 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-import { User } from '../models/user'; // Assuming you have a User model
+import User from '../models/user';
 
-dotenv.config();
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'defaultsecret';
 
-// Profile route
-router.get('/profile', async (req: Request, res: Response) => {
-  if (!process.env.JWT_SECRET) {
-    return res.status(500).json({ message: 'JWT secret is not configured' });
+// Middleware to authenticate token
+const authenticate = (req: Request, res: Response, next: any) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
   }
 
   try {
-    // Extract the token from the Authorization header
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ message: 'Unauthorized: No token provided' });
-    }
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    (req as any).user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+};
 
-    // Decode the token to extract the user's ID
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET) as { userId: string };
-    const userId = decodedToken.userId;
+router.get('/', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const user = await User.findById(userId).select('-password');
 
-    // Fetch the user's details from the database
-    const user = await User.findById(userId).select('name email');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Respond with the user's profile details
-    res.json({ name: user.name, email: user.email });
+    res.status(200).json(user);
   } catch (error) {
     console.error('Error fetching profile:', error);
-    res.status(500).json({ message: 'Failed to retrieve profile' });
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 

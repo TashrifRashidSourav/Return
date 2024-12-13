@@ -20,6 +20,7 @@ const EditProfileScreen = () => {
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Fetch user profile data
   const fetchProfile = async () => {
     setLoading(true);
     try {
@@ -29,7 +30,7 @@ const EditProfileScreen = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/profile', {
+      const response = await fetch('http://localhost:5000/profile', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -45,13 +46,14 @@ const EditProfileScreen = () => {
       setEmail(data.email);
       setPhoneNumber(data.phoneNumber || '');
       setProfilePicture(data.profilePicture || null);
-    } catch (error) {
-      // Alert.alert('Error', error.message || 'Failed to load profile data.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to load profile data.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Change profile picture
   const handleChangePicture = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -64,11 +66,12 @@ const EditProfileScreen = () => {
       quality: 1,
     });
 
-    // if (!pickerResult.cancelled) {
-    //   setProfilePicture(pickerResult.uri);
-    // }
+    if (!pickerResult.canceled && pickerResult.assets.length > 0) {
+      setProfilePicture(pickerResult.assets[0].uri);
+    }
   };
 
+  // Update profile
   const handleUpdate = async () => {
     setLoading(true);
     try {
@@ -79,9 +82,10 @@ const EditProfileScreen = () => {
       }
 
       const formData = new FormData();
-      formData.append('name', username);
-      formData.append('email', email);
-      formData.append('phoneNumber', phoneNumber);
+      formData.append('name', username.trim());
+      formData.append('email', email.trim());
+      formData.append('phoneNumber', phoneNumber.trim());
+
       if (profilePicture) {
         formData.append('profilePicture', {
           uri: profilePicture,
@@ -90,22 +94,24 @@ const EditProfileScreen = () => {
         } as any);
       }
 
-      const response = await fetch('http://localhost:5000/api/profile', {
+      const response = await fetch('http://localhost:5000', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
         },
         body: formData,
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update profile');
+        throw new Error(result.message || 'Failed to update profile');
       }
 
       Alert.alert('Success', 'Profile updated successfully!');
-    } catch (error) {
-      // Alert.alert('Error', error.message || 'Failed to update profile.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update profile.');
     } finally {
       setLoading(false);
     }
@@ -129,8 +135,10 @@ const EditProfileScreen = () => {
       <View style={styles.profilePictureContainer}>
         <TouchableOpacity onPress={handleChangePicture}>
           <Image
-            // source={profilePicture ? { uri: profilePicture } : require('./assets/default-profile.png')}
-            style={styles.profilePicture}
+            // source={
+            //   profilePicture ? { uri: profilePicture } : require('./assets/default-profile.png')
+            // }
+            // style={styles.profilePicture}
           />
         </TouchableOpacity>
         <Text style={styles.changePictureText}>Change Picture</Text>
@@ -181,7 +189,7 @@ const styles = StyleSheet.create({
   form: { width: '90%', marginTop: 20 },
   label: { fontSize: 16, marginBottom: 8, color: '#333333' },
   input: { borderWidth: 1, borderColor: '#CCCCCC', borderRadius: 8, padding: 10, marginBottom: 20, backgroundColor: '#F9F9F9' },
-  updateButton: { backgroundColor: '#000000', paddingVertical: 15, borderRadius: 8, alignItems: 'center' },
+  updateButton: { backgroundColor: '#007BFF', paddingVertical: 15, borderRadius: 8, alignItems: 'center' },
   updateButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
   loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' },
 });
