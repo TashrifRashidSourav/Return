@@ -28,7 +28,7 @@ const LoginScreen = () => {
         console.log('Detected IP Address:', ipAddress);
 
         if (ipAddress) {
-          const apiBase = `http://localhost:5000`;  // Use dynamic IP
+          const apiBase = `http://10.10.200.30:5000`;  // Use dynamic IP
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
