@@ -30,7 +30,7 @@ const EditProfileScreen = () => {
         return;
       }
 
-      const response = await fetch('http://10.10.200.30:5000/profile', {
+      const response = await fetch('http://10.10.201.48:5000/profile', {
         headers: {
           Authorization: `Bearer ${token}`,
         },

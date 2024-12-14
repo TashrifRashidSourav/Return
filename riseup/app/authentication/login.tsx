@@ -14,13 +14,15 @@ import {
 import { useRouter } from 'expo-router';
 import * as Network from 'expo-network';
 import AsyncStorage from '@react-native-async-storage/async-storage';  // Add AsyncStorage for token storage
-import { MaterialIcons } from '@expo/vector-icons'; 
+import { MaterialIcons } from '@expo/vector-icons';
+
 const LoginScreen = () => {
   const router = useRouter();
   const [baseURL, setBaseURL] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // Fetch IP address on component mount
   useEffect(() => {
     const fetchIPAddress = async () => {
       try {
@@ -28,7 +30,7 @@ const LoginScreen = () => {
         console.log('Detected IP Address:', ipAddress);
 
         if (ipAddress) {
-          const apiBase = `http://10.10.200.30:5000`;  // Use dynamic IP
+          const apiBase = `http://10.10.201.48:5000`;  // Use dynamic IP
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -49,6 +51,7 @@ const LoginScreen = () => {
     }
 
     try {
+      // Send login request to backend
       const response = await fetch(`${baseURL}/login`, {
         method: 'POST',
         headers: {
@@ -87,8 +90,9 @@ const LoginScreen = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.title}>Sign in your account</Text>
+            <Text style={styles.title}>Sign in to your account</Text>
 
+            {/* Email Input */}
             <View style={styles.inputWrapper}>
               <MaterialIcons name="email" size={20} color="#6c757d" />
               <TextInput
@@ -101,6 +105,7 @@ const LoginScreen = () => {
               />
             </View>
 
+            {/* Password Input */}
             <View style={styles.inputWrapper}>
               <MaterialIcons name="lock" size={20} color="#6c757d" />
               <TextInput
@@ -113,10 +118,12 @@ const LoginScreen = () => {
               />
             </View>
 
+            {/* Login Button */}
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.loginButtonText}>SIGN IN</Text>
             </TouchableOpacity>
 
+            {/* Social Media Login */}
             <View style={styles.socialMediaContainer}>
               <TouchableOpacity style={styles.socialButton}>
                 <Image
@@ -138,6 +145,7 @@ const LoginScreen = () => {
               </TouchableOpacity>
             </View>
 
+            {/* Sign Up Navigation */}
             <TouchableOpacity
               onPress={() => router.push('/authentication/registration')}
             >
