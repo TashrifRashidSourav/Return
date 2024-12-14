@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, TextInput, Button, Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -22,6 +22,9 @@ const PostScreen = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [token, setToken] = useState<string | null>(null);
   const [baseURL, setBaseURL] = useState('http://192.168.0.108:5000'); // Base URL for API
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1); // For pagination
+  const [hasMore, setHasMore] = useState(true); // To check if there are more posts to load
 
   useEffect(() => {
     const fetchTokenAndPosts = async () => {
@@ -29,7 +32,7 @@ const PostScreen = () => {
         const storedToken = await AsyncStorage.getItem('authToken');
         if (storedToken) {
           setToken(storedToken);
-          await fetchPosts(storedToken);
+          await fetchPosts(storedToken, 1); // Fetch the first page of posts
         } else {
           console.warn('No token found, please login again.');
           Alert.alert('Error', 'You are not logged in. Please log in again.');
@@ -42,16 +45,31 @@ const PostScreen = () => {
     fetchTokenAndPosts();
   }, []);
 
-  // Fetch posts from API
-  const fetchPosts = async (storedToken: string) => {
+  // Fetch posts from API with pagination
+  const fetchPosts = async (storedToken: string, pageNumber: number) => {
+    if (loading) return; // Prevent multiple requests at once
+
+    setLoading(true);
     try {
-      const response = await axios.get<{ posts: Post[] }>(`${baseURL}/posts/`, {
-        headers: { Authorization: `Bearer ${storedToken}` },
-      });
-      setPosts(response.data.posts);
+      const response = await axios.get<{ posts: Post[]; total: number }>(
+        `${baseURL}/posts/`,
+        {
+          headers: { Authorization: `Bearer ${storedToken}` },
+          params: { page: pageNumber, limit: 10 }, // Pagination params
+        }
+      );
+
+      if (response.data.posts.length < 10) {
+        setHasMore(false); // No more posts to load
+      }
+
+      setPosts((prevPosts) => (pageNumber === 1 ? response.data.posts : [...prevPosts, ...response.data.posts]));
+      setPage(pageNumber); // Update page
     } catch (error) {
       console.error('Error fetching posts:', error);
       Alert.alert('Error', 'Failed to fetch posts. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,7 +87,7 @@ const PostScreen = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchPosts(token); // Refresh posts to update likes
+      fetchPosts(token, page); // Refresh posts to update likes
     } catch (error) {
       console.error('Error liking post:', error);
       Alert.alert('Error', 'Failed to like post. Please try again.');
@@ -93,13 +111,22 @@ const PostScreen = () => {
       });
       setNewPostText('');
       setImageUrl('');
-      fetchPosts(token); // Refresh posts list
+      fetchPosts(token, 1); // Refresh posts list
     } catch (error) {
       console.error('Error creating post:', error);
       Alert.alert('Error', 'Failed to create post. Please try again.');
     }
   };
 
+  // Load more posts when scrolled to the end
+  const loadMorePosts = () => {
+    if (token && hasMore) { // Check if token is not null
+      fetchPosts(token, page + 1); // Fetch the next page
+    } else {
+      console.warn('No token available, please login.');
+      Alert.alert('Error', 'You are not logged in. Please log in again.');
+    }
+  };
   // Render a single post
   const renderPost = ({ item }: { item: Post }) => (
     <View style={styles.postContainer}>
@@ -131,12 +158,18 @@ const PostScreen = () => {
       />
       <Button title="Post" onPress={createPost} />
 
+      {loading && <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />}
+      
       <FlatList
         data={posts}
         renderItem={renderPost}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.postsList}
+        onEndReached={loadMorePosts} // Trigger when reaching the end
+        onEndReachedThreshold={0.5} // 50% of the list visible
       />
+
+      {posts.length === 0 && !loading && <Text>No posts to display</Text>}
     </View>
   );
 };
@@ -188,6 +221,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     borderRadius: 5,
     alignSelf: 'flex-start',
+  },
+  loading: {
+    marginTop: 20,
   },
 });
 

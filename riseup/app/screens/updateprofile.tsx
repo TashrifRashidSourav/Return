@@ -21,7 +21,7 @@ const UpdateProfileScreen = () => {
           return;
         }
 
-        const response = await fetch('http://10.10.201.48:5000/profile', {
+        const response = await fetch('http://192.168.0.108:5000/profile', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -58,7 +58,7 @@ const UpdateProfileScreen = () => {
         return;
       }
 
-      const response = await fetch('http://10.10.201.48:5000/update-profile/update', {
+      const response = await fetch('http://192.168.0.108:5000/update-profile/update', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

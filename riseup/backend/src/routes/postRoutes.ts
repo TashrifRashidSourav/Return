@@ -54,11 +54,32 @@ router.post('/create', authenticate, upload.single('image'), async (req: Request
   }
 });
 
-// Route: Get all posts
+// Route: Get posts with pagination
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
-    const posts = await Post.find().populate('userId', 'name email').sort({ createdAt: -1 });
-    res.status(200).json(posts);
+    // Get pagination params from query
+    const page = parseInt(req.query.page as string) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit as string) || 10; // Default to 10 posts per page
+    const skip = (page - 1) * limit;
+
+    // Fetch posts with pagination
+    const posts = await Post.find()
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)  // Skip posts for previous pages
+      .limit(limit); // Limit the number of posts per page
+
+    // Count total posts to calculate total pages
+    const totalPosts = await Post.countDocuments();
+    const totalPages = Math.ceil(totalPosts / limit);
+
+    // Respond with posts and pagination info
+    res.status(200).json({
+      posts,
+      totalPosts,
+      totalPages,
+      currentPage: page,
+    });
   } catch (error) {
     console.error('Error fetching posts:', error);
     res.status(500).json({ message: 'Internal server error' });
