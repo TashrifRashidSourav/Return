@@ -102,19 +102,70 @@ const PostScreen = () => {
     }
 
     try {
-      const newPost = {
-        text: newPostText,
-        imageUrl: imageUrl,
-      };
-      await axios.post(`${baseURL}/posts/create`, newPost, {
-        headers: { Authorization: `Bearer ${token}` },
+      const formData = new FormData();
+      formData.append('text', newPostText);
+
+      if (imageUrl) {
+        const file = {
+          uri: imageUrl,
+          type: 'image/jpeg', // Adjust this according to your image format
+          name: 'upload.jpg', // You can give it a dynamic name
+        } as const;
+
+        formData.append('image', file as any); // Type assertion for 'image' field
+      }
+
+      await axios.post(`${baseURL}/posts/create`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
       });
+
       setNewPostText('');
       setImageUrl('');
       fetchPosts(token, 1); // Refresh posts list
     } catch (error) {
       console.error('Error creating post:', error);
       Alert.alert('Error', 'Failed to create post. Please try again.');
+    }
+  };
+
+  // Edit a post
+  const editPost = async (postId: string, newText: string) => {
+    if (!token) {
+      Alert.alert('Error', 'You are not logged in. Please log in again.');
+      return;
+    }
+
+    try {
+      await axios.put(
+        `${baseURL}/posts/update/${postId}`,
+        { text: newText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchPosts(token, page); // Refresh posts to show the updated text
+    } catch (error) {
+      console.error('Error editing post:', error);
+      Alert.alert('Error', 'Failed to edit post. Please try again.');
+    }
+  };
+
+  // Delete a post
+  const deletePost = async (postId: string) => {
+    if (!token) {
+      Alert.alert('Error', 'You are not logged in. Please log in again.');
+      return;
+    }
+
+    try {
+      await axios.delete(`${baseURL}/posts/delete/${postId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchPosts(token, page); // Refresh posts to remove the deleted post
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      Alert.alert('Error', 'Failed to delete post. Please try again.');
     }
   };
 
@@ -127,6 +178,7 @@ const PostScreen = () => {
       Alert.alert('Error', 'You are not logged in. Please log in again.');
     }
   };
+
   // Render a single post
   const renderPost = ({ item }: { item: Post }) => (
     <View style={styles.postContainer}>
@@ -138,6 +190,12 @@ const PostScreen = () => {
       <Text style={styles.postDate}>{new Date(item.createdAt).toLocaleString()}</Text>
       <TouchableOpacity onPress={() => likePost(item._id)} style={styles.likeButton}>
         <Text>👍 {item.likes.length}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => editPost(item._id, 'Updated text')} style={styles.editButton}>
+        <Text>Edit</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => deletePost(item._id)} style={styles.deleteButton}>
+        <Text>Delete</Text>
       </TouchableOpacity>
     </View>
   );
@@ -221,6 +279,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     borderRadius: 5,
     alignSelf: 'flex-start',
+  },
+  editButton: {
+    padding: 5,
+    backgroundColor: '#ffb74d',
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    marginTop: 5,
+  },
+  deleteButton: {
+    padding: 5,
+    backgroundColor: '#e57373',
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    marginTop: 5,
   },
   loading: {
     marginTop: 20,

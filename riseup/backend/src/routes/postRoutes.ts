@@ -54,7 +54,7 @@ router.post('/create', authenticate, upload.single('image'), async (req: Request
   }
 });
 
-// Route: Get posts with pagination
+// Route: Get posts with pagination and populated user name
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
     // Get pagination params from query
@@ -62,9 +62,9 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 10; // Default to 10 posts per page
     const skip = (page - 1) * limit;
 
-    // Fetch posts with pagination
+    // Fetch posts with pagination and populate the userId field with the user's name
     const posts = await Post.find()
-      .populate('userId', 'name email')
+      .populate('userId', 'name') // Populate userId with the 'name' of the user
       .sort({ createdAt: -1 })
       .skip(skip)  // Skip posts for previous pages
       .limit(limit); // Limit the number of posts per page
