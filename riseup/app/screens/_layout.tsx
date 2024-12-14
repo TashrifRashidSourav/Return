@@ -37,10 +37,13 @@ export default function TabLayout() {
 
       {/* Meal Form Screen */}
       <Tabs.Screen
-        name="MealForm"
+        name="Post"
         options={{
-          title: 'Meal Form',
-          tabBarButton: () => null,  // Hides the screen from the tab bar
+          title: 'Post',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'fast-food' : 'fast-food-outline'} color={color} />
+          ),
+
         }}
       />
 

@@ -29,13 +29,13 @@ import registrationRoutes from './routes/registration';
 import authenticationRoutes from './routes/authentication';
 import profileRoutes from './routes/profile';
 import updateProfileRoutes from './routes/updateProfile';
-
+import postRoutes from './routes/postRoutes';
 // Use routes
 app.use('/register', registrationRoutes);
 app.use('/login', authenticationRoutes);
 app.use('/profile', profileRoutes);
 app.use('/update-profile', updateProfileRoutes);
-
+app.use('/posts', postRoutes);
 // Start server and make it accessible from any device in the same network
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000; // Convert the port to a number if provided
 app.listen(PORT, '0.0.0.0', () => {
