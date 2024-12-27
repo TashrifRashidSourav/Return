@@ -1,42 +1,43 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import { connectDB } from './config/db';
-import registerRoute from './routes/register';
-import loginRoute from './routes/login';
-import profileRoute from './routes/profile';
+import dotenv from 'dotenv';
 import cors from 'cors';
 
 // Load environment variables
 dotenv.config();
 
+// Initialize Express app
 const app = express();
-
-// Enable CORS for specific origin (your frontend URL)
-app.use(cors({
-  origin: 'http://localhost:5000',  // Frontend running on localhost:3000
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  preflightContinue: false,
-  optionsSuccessStatus: 200
-}));
-
-// Middleware for parsing JSON
 app.use(express.json());
 
-// Connect to MongoDB
-connectDB();
+// Enable CORS to allow cross-origin requests from mobile devices
+const corsOptions = {
+  origin: '*', // Allows all origins (for development purposes)
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow necessary methods
+};
+app.use(cors(corsOptions));
 
-// Test API endpoint
-app.get('/', (req, res) => {
-  res.send('API is running...');
+// MongoDB connection
+const MONGO_URI = process.env.MONGO_URI || '';
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+// Import routes
+import registrationRoutes from './routes/registration';
+import authenticationRoutes from './routes/authentication';
+import profileRoutes from './routes/profile';
+import updateProfileRoutes from './routes/updateProfile';
+import postRoutes from './routes/postRoutes';
+// Use routes
+app.use('/register', registrationRoutes);
+app.use('/login', authenticationRoutes);
+app.use('/profile', profileRoutes);
+app.use('/update-profile', updateProfileRoutes);
+app.use('/posts', postRoutes);
+// Start server and make it accessible from any device in the same network
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000; // Convert the port to a number if provided
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
-
-// Add the registration, login, and profile routes
-app.use('/api', registerRoute);
-app.use('/api', loginRoute); 
-app.use('/api', profileRoute); 
-
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

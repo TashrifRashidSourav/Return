@@ -9,8 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons'; // Import the icon library
 import { useRouter } from 'expo-router';
 import * as Network from 'expo-network';
 
@@ -29,7 +30,7 @@ const RegistrationScreen = () => {
         console.log('Detected IP Address:', ipAddress);
 
         if (ipAddress) {
-          const apiBase = `http://10.15.17.245:5000/api`; // Replace with dynamic assignment if required
+          const apiBase = `http://localhost:5000/register`; // Replace with dynamic assignment if required
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -83,7 +84,16 @@ const RegistrationScreen = () => {
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.container}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../images/icon.png')} // Add your logo image here
+              style={styles.logo}
+            />
+          </View>
+
           <View style={styles.inputContainer}>
+            <Text style={styles.title}>Sign up your account</Text>
+
             <View style={styles.inputWrapper}>
               <MaterialIcons name="person" size={20} color="#6c757d" />
               <TextInput
@@ -145,6 +155,7 @@ const RegistrationScreen = () => {
                 Already have an account? Login
               </Text>
             </TouchableOpacity>
+            
           </View>
         </View>
       </ScrollView>
@@ -158,12 +169,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#f9f9f9',
   },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+  },
   inputContainer: {
     padding: 20,
     backgroundColor: '#fff',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     elevation: 4,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 30,
   },
   inputWrapper: {
     flexDirection: 'row',

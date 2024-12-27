@@ -1,19 +1,8 @@
+import { Tabs } from 'expo-router';
 import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+import { TabBarIcon } from '@/components/navigation/TabBarIcon'; // Ensure this component exists and works
+import { Colors } from '@/constants/Colors'; // Ensure this is properly defined
+import { useColorScheme } from '@/hooks/useColorScheme'; // Ensure this is properly defined
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -22,36 +11,78 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        headerShown: false, // Hide the header globally
+      }}
+    >
+      {/* Profile Screen */}
       <Tabs.Screen
-        name="index"
+        name="profile"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
+          title: 'Profile', // You can set this if you want the title in the tab bar.
+          headerShown: true, // Show header only for this screen
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
           ),
         }}
       />
+
+      {/* Update Profile Screen */}
       <Tabs.Screen
-        name="two"
+        name="updateprofile"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'Update Profile', // Set title for tab bar if needed
+          headerShown: false, // Hide header
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'refresh' : 'refresh-outline'} color={color} />
+          ),
+        }}
+      />
+
+      {/* Post Screen */}
+      <Tabs.Screen
+        name="Post"
+        options={{
+          title: 'Post', // Title for tab bar if needed
+          headerShown: false, // Hide header
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'create' : 'create-outline'} color={color} />
+          ),
+        }}
+      />
+
+      {/* Meals Screen */}
+      <Tabs.Screen
+        name="MealScreen"
+        options={{
+          title: 'Meals', // Title for tab bar if needed
+          headerShown: false, // Hide header
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'restaurant' : 'restaurant-outline'} color={color} />
+          ),
+        }}
+      />
+
+      {/* Users Screen */}
+      <Tabs.Screen
+        name="users"
+        options={{
+          title: 'Users', // Title for tab bar if needed
+          headerShown: false, // Hide header
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'people' : 'people-outline'} color={color} />
+          ),
+        }}
+      />
+
+      {/* Wallet Screen */}
+      <Tabs.Screen
+        name="wallet"
+        options={{
+          title: 'Wallet', // Title for tab bar if needed
+          headerShown: false, // Hide header
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'wallet' : 'wallet-outline'} color={color} />
+          ),
         }}
       />
     </Tabs>
