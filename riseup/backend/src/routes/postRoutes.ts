@@ -1,11 +1,11 @@
 import express, { Request, Response } from 'express';
 import Post from '../models/Post';
 import jwt from 'jsonwebtoken';
-import multer from 'multer';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'defaultsecret';
 
+// Middleware for authentication
 const authenticate = (req: Request, res: Response, next: any) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -19,17 +19,10 @@ const authenticate = (req: Request, res: Response, next: any) => {
   }
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage });
-
-router.post('/create', authenticate, upload.single('image'), async (req: Request, res: Response) => {
+// Create a new post
+router.post('/create', authenticate, async (req: Request, res: Response) => {
   try {
-    const { text } = req.body;
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-
+    const { text, imageUrl } = req.body;
     const post = new Post({
       userId: (req as any).user.id,
       text,
@@ -44,6 +37,7 @@ router.post('/create', authenticate, upload.single('image'), async (req: Request
   }
 });
 
+// Get all posts
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -77,11 +71,14 @@ router.put('/like/:id', authenticate, async (req: Request, res: Response) => {
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
+    // Check if the user already liked the post
     const likeIndex = post.likes.indexOf(userId);
 
     if (likeIndex === -1) {
+      // If not liked, add to likes
       post.likes.push(userId);
     } else {
+      // If already liked, remove from likes (unlike)
       post.likes = post.likes.filter(id => id !== userId);
     }
 
@@ -92,6 +89,8 @@ router.put('/like/:id', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+
+// Update a post
 router.put('/update/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -111,6 +110,7 @@ router.put('/update/:id', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+// Delete a post
 router.delete('/delete/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
