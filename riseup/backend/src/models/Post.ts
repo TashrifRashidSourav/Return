@@ -16,7 +16,7 @@ const PostSchema: Schema = new Schema(
     imageUrl: { type: String },
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
-  { timestamps: true } // Adds createdAt and updatedAt fields
+  { timestamps: true }
 );
 
 const Post = mongoose.model<IPost>('Post', PostSchema);

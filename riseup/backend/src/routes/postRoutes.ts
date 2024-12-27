@@ -6,87 +6,69 @@ import multer from 'multer';
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'defaultsecret';
 
-// Middleware to authenticate token
 const authenticate = (req: Request, res: Response, next: any) => {
-  const token = req.headers['authorization']?.split(' ')[1]; // Bearer <token>
-  if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
-  }
-
   try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'No token provided' });
+    
     const decoded = jwt.verify(token, JWT_SECRET) as any;
-    (req as any).user = decoded; // Attach user info to request object
+    (req as any).user = decoded;
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
-    return res.status(401).json({ message: 'Invalid token' });
+    res.status(401).json({ message: 'Invalid token' });
   }
 };
 
-// Multer setup for file uploads
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Directory for storing uploaded images
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  },
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage });
 
-// Route: Create a new post
 router.post('/create', authenticate, upload.single('image'), async (req: Request, res: Response) => {
   try {
     const { text } = req.body;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
 
-    const newPost = new Post({
+    const post = new Post({
       userId: (req as any).user.id,
       text,
       imageUrl,
+      likes: []
     });
 
-    await newPost.save();
-    res.status(201).json({ message: 'Post created successfully', post: newPost });
+    await post.save();
+    res.status(201).json(post);
   } catch (error) {
-    console.error('Error creating post:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to create post' });
   }
 });
 
-// Route: Get posts with pagination and populated user name
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
-    // Get pagination params from query
-    const page = parseInt(req.query.page as string) || 1; // Default to page 1
-    const limit = parseInt(req.query.limit as string) || 10; // Default to 10 posts per page
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    // Fetch posts with pagination and populate the userId field with the user's name
     const posts = await Post.find()
-      .populate('userId', 'name') // Populate userId with the 'name' of the user
+      .populate('userId', 'name')
       .sort({ createdAt: -1 })
-      .skip(skip)  // Skip posts for previous pages
-      .limit(limit); // Limit the number of posts per page
+      .skip(skip)
+      .limit(limit);
 
-    // Count total posts to calculate total pages
     const totalPosts = await Post.countDocuments();
-    const totalPages = Math.ceil(totalPosts / limit);
 
-    // Respond with posts and pagination info
-    res.status(200).json({
+    res.json({
       posts,
-      totalPosts,
-      totalPages,
       currentPage: page,
+      totalPages: Math.ceil(totalPosts / limit),
+      totalPosts
     });
   } catch (error) {
-    console.error('Error fetching posts:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to fetch posts' });
   }
 });
 
-// Route: Like or Unlike a post
 router.put('/like/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const postId = req.params.id;
@@ -95,66 +77,51 @@ router.put('/like/:id', authenticate, async (req: Request, res: Response) => {
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    if (post.likes.includes(userId)) {
-      // Unlike post
-      post.likes = post.likes.filter((id) => id !== userId);
-    } else {
-      // Like post
+    const likeIndex = post.likes.indexOf(userId);
+
+    if (likeIndex === -1) {
       post.likes.push(userId);
+    } else {
+      post.likes = post.likes.filter(id => id !== userId);
     }
 
     await post.save();
-    res.status(200).json({ message: 'Post updated successfully', likes: post.likes });
+    res.json({ likes: post.likes });
   } catch (error) {
-    console.error('Error liking/unliking post:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to like/unlike post' });
   }
 });
 
-// Route: Update a post
 router.put('/update/:id', authenticate, async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     const { text } = req.body;
-    const postId = req.params.id;
     const userId = (req as any).user.id;
 
-    const post = await Post.findById(postId);
-    if (!post) return res.status(404).json({ message: 'Post not found' });
+    const post = await Post.findOneAndUpdate(
+      { _id: id, userId },
+      { text },
+      { new: true }
+    );
 
-    // Check if the post belongs to the logged-in user
-    if (post.userId.toString() !== userId) {
-      return res.status(403).json({ message: 'You are not authorized to edit this post' });
-    }
-
-    post.text = text || post.text; // Update text if provided
-    await post.save();
-
-    res.status(200).json({ message: 'Post updated successfully', post });
+    if (!post) return res.status(404).json({ message: 'Post not found or unauthorized' });
+    res.json(post);
   } catch (error) {
-    console.error('Error updating post:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to update post' });
   }
 });
 
-// Route: Delete a post
 router.delete('/delete/:id', authenticate, async (req: Request, res: Response) => {
   try {
-    const postId = req.params.id;
+    const { id } = req.params;
     const userId = (req as any).user.id;
 
-    const post = await Post.findById(postId);
-    if (!post) return res.status(404).json({ message: 'Post not found' });
+    const post = await Post.findOneAndDelete({ _id: id, userId });
+    if (!post) return res.status(404).json({ message: 'Post not found or unauthorized' });
 
-    // Check if the post belongs to the logged-in user
-    if (post.userId.toString() !== userId) {
-      return res.status(403).json({ message: 'You are not authorized to delete this post' });
-    }
-
-    await Post.findByIdAndDelete(postId);
-    res.status(200).json({ message: 'Post deleted successfully' });
+    res.json({ message: 'Post deleted successfully' });
   } catch (error) {
-    console.error('Error deleting post:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to delete post' });
   }
 });
 
