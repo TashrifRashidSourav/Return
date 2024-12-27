@@ -1,17 +1,12 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import 'react-native-reanimated';
-
-
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -23,22 +18,20 @@ export default function RootLayout() {
   }, [loaded]);
 
   if (!loaded) {
-    return null;
+    return null; // Return null while fonts are loading
   }
 
   return (
-    
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="screen" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-        <Stack.Screen name="(auth)" options={{ headerShown:false }} />
-        <Stack.Screen name="(auth)/login" options={{ headerShown:false }} />
-        <Stack.Screen name="./authentication/registration" options={{ headerShown:false }} />
-        <Stack.Screen name="index" options={{ headerShown:false }} />
-        
-        
-      </Stack>
-    
+    <Stack>
+      {/* Ensure no headers are shown for the screens in the app */}
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="screens" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="authentication/login" options={{ headerShown: false }} />
+      <Stack.Screen name="authentication/registration" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+      {/* Add other screens as necessary */}
+    </Stack>
   );
 }

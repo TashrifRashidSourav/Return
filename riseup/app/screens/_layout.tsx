@@ -10,70 +10,76 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: true,
+        tabBarActiveTintColor: 'blue', // Change active tab color to blue
+        headerShown: false, // Default for all screens is no header
       }}
     >
-      {/* Home Screen */}
+      {/* Profile Screen - Header shown */}
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'Profile', // Correct title for the screen
+          headerShown: true, // Show header for the Profile screen
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'person' : 'home-outline'} color={color} />
+            <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
           ),
         }}
       />
 
+      {/* Update Profile Screen - Header hidden */}
       <Tabs.Screen
         name="updateprofile"
         options={{
-          title: 'updateprofile',
+          title: 'Update Profile',
+          headerShown: false, // Header hidden
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'fast-food' : 'fast-food-outline'} color={color} />
+            <TabBarIcon name={focused ? 'refresh' : 'refresh-outline'} color={color} />
           ),
         }}
       />
 
-      {/* Meal Form Screen */}
+      {/* Post Screen - Header hidden */}
       <Tabs.Screen
         name="Post"
         options={{
           title: 'Post',
+          headerShown: false, // Header hidden
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'fast-food' : 'fast-food-outline'} color={color} />
+            <TabBarIcon name={focused ? 'create' : 'create-outline'} color={color} />
           ),
-
         }}
       />
 
-      {/* Meals Screen */}
+      {/* Meals Screen - Header hidden */}
       <Tabs.Screen
         name="MealScreen"
         options={{
           title: 'Meals',
+          headerShown: false, // Header hidden
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'restaurant' : 'restaurant-outline'} color={color} />
           ),
         }}
       />
 
-      {/* Users Screen */}
+      {/* Users Screen - Header hidden */}
       <Tabs.Screen
         name="users"
         options={{
           title: 'Users',
+          headerShown: false, // Header hidden
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'people' : 'people-outline'} color={color} />
           ),
         }}
       />
 
-      {/* Wallet Screen */}
+      {/* Wallet Screen - Header hidden */}
       <Tabs.Screen
         name="wallet"
         options={{
           title: 'Wallet',
+          headerShown: false, // Header hidden
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'wallet' : 'wallet-outline'} color={color} />
           ),
