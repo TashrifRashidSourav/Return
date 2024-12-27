@@ -1,302 +1,260 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, TextInput, Button, Alert, StyleSheet, ActivityIndicator } from 'react-native';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  TextInput,
+  Modal,
+  Button,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Post {
   _id: string;
-  user?: {
-    name?: string;
-    email?: string;
-  };
   text: string;
   imageUrl?: string;
+  userId: {
+    name: string;
+  };
   likes: string[];
   createdAt: string;
-  updatedAt: string;
 }
 
 const PostScreen = () => {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [newPostText, setNewPostText] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [token, setToken] = useState<string | null>(null);
-  const [baseURL, setBaseURL] = useState('http://192.168.0.108:5000'); // Base URL for API
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1); // For pagination
-  const [hasMore, setHasMore] = useState(true); // To check if there are more posts to load
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [newText, setNewText] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    const fetchTokenAndPosts = async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem('authToken');
-        if (storedToken) {
-          setToken(storedToken);
-          await fetchPosts(storedToken, 1); // Fetch the first page of posts
-        } else {
-          console.warn('No token found, please login again.');
-          Alert.alert('Error', 'You are not logged in. Please log in again.');
-        }
-      } catch (error) {
-        console.error('Error retrieving token:', error);
-      }
-    };
-
-    fetchTokenAndPosts();
-  }, []);
-
-  // Fetch posts from API with pagination
-  const fetchPosts = async (storedToken: string, pageNumber: number) => {
-    if (loading) return; // Prevent multiple requests at once
-
+  const fetchPosts = async (page: number) => {
     setLoading(true);
     try {
-      const response = await axios.get<{ posts: Post[]; total: number }>(
-        `${baseURL}/posts/`,
-        {
-          headers: { Authorization: `Bearer ${storedToken}` },
-          params: { page: pageNumber, limit: 10 }, // Pagination params
-        }
-      );
-
-      if (response.data.posts.length < 10) {
-        setHasMore(false); // No more posts to load
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        Alert.alert('Error', 'No token found, please login again.');
+        return;
       }
 
-      setPosts((prevPosts) => (pageNumber === 1 ? response.data.posts : [...prevPosts, ...response.data.posts]));
-      setPage(pageNumber); // Update page
-    } catch (error) {
+      const response = await fetch(`http://192.168.0.110:5000/posts?page=${page}&limit=10`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch posts');
+      }
+
+      setPosts(page === 1 ? data.posts : [...posts, ...data.posts]); // Append posts for infinite scroll
+      setCurrentPage(data.currentPage);
+      setTotalPages(data.totalPages);
+    } catch (error: any) {
       console.error('Error fetching posts:', error);
-      Alert.alert('Error', 'Failed to fetch posts. Please try again later.');
+      Alert.alert('Error', error.message || 'Failed to fetch posts.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Like a post
   const likePost = async (postId: string) => {
-    if (!token) {
-      console.warn('No token available, please login.');
-      Alert.alert('Error', 'You are not logged in. Please log in again.');
-      return;
-    }
-
     try {
-      await axios.put(
-        `${baseURL}/posts/like/${postId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      fetchPosts(token, page); // Refresh posts to update likes
-    } catch (error) {
-      console.error('Error liking post:', error);
-      Alert.alert('Error', 'Failed to like post. Please try again.');
-    }
-  };
-
-  // Create a new post
-  const createPost = async () => {
-    if (!token) {
-      Alert.alert('Error', 'You are not logged in. Please log in again.');
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('text', newPostText);
-
-      if (imageUrl) {
-        const file = {
-          uri: imageUrl,
-          type: 'image/jpeg', // Adjust this according to your image format
-          name: 'upload.jpg', // You can give it a dynamic name
-        } as const;
-
-        formData.append('image', file as any); // Type assertion for 'image' field
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        Alert.alert('Error', 'No token found, please login again.');
+        return;
       }
 
-      await axios.post(`${baseURL}/posts/create`, formData, {
+      const response = await fetch(`http://192.168.0.110:5000/posts/like/${postId}`, {
+        method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
         },
       });
 
-      setNewPostText('');
-      setImageUrl('');
-      fetchPosts(token, 1); // Refresh posts list
-    } catch (error) {
-      console.error('Error creating post:', error);
-      Alert.alert('Error', 'Failed to create post. Please try again.');
-    }
-  };
+      const data = await response.json();
 
-  // Edit a post
-  const editPost = async (postId: string, newText: string) => {
-    if (!token) {
-      Alert.alert('Error', 'You are not logged in. Please log in again.');
-      return;
-    }
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to like/unlike post');
+      }
 
-    try {
-      await axios.put(
-        `${baseURL}/posts/update/${postId}`,
-        { text: newText },
-        { headers: { Authorization: `Bearer ${token}` } }
+      // Update the liked state in posts
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === postId ? { ...post, likes: data.likes } : post
+        )
       );
-      fetchPosts(token, page); // Refresh posts to show the updated text
-    } catch (error) {
-      console.error('Error editing post:', error);
-      Alert.alert('Error', 'Failed to edit post. Please try again.');
+    } catch (error: any) {
+      console.error('Error liking/unliking post:', error);
+      Alert.alert('Error', error.message || 'Failed to like/unlike post.');
     }
   };
 
-  // Delete a post
-  const deletePost = async (postId: string) => {
-    if (!token) {
-      Alert.alert('Error', 'You are not logged in. Please log in again.');
-      return;
-    }
+  const editPost = async () => {
+    if (!editingPost) return;
 
     try {
-      await axios.delete(`${baseURL}/posts/delete/${postId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        Alert.alert('Error', 'No token found, please login again.');
+        return;
+      }
+
+      const response = await fetch(`http://192.168.0.110:5000/posts/update/${editingPost._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text: newText }),
       });
-      fetchPosts(token, page); // Refresh posts to remove the deleted post
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      Alert.alert('Error', 'Failed to delete post. Please try again.');
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to edit post');
+      }
+
+      // Update the post in the list
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === editingPost._id ? { ...post, text: newText } : post
+        )
+      );
+
+      Alert.alert('Success', 'Post updated successfully.');
+      setIsEditing(false);
+      setEditingPost(null);
+      setNewText('');
+    } catch (error: any) {
+      console.error('Error editing post:', error);
+      Alert.alert('Error', error.message || 'Failed to edit post.');
     }
   };
 
-  // Load more posts when scrolled to the end
   const loadMorePosts = () => {
-    if (token && hasMore) { // Check if token is not null
-      fetchPosts(token, page + 1); // Fetch the next page
-    } else {
-      console.warn('No token available, please login.');
-      Alert.alert('Error', 'You are not logged in. Please log in again.');
+    if (currentPage < totalPages) {
+      fetchPosts(currentPage + 1); // Fetch next page
     }
   };
 
-  // Render a single post
+  useEffect(() => {
+    fetchPosts(1); // Fetch the first page on mount
+  }, []);
+
   const renderPost = ({ item }: { item: Post }) => (
     <View style={styles.postContainer}>
-      <Text style={styles.postUser}>
-        {item.user?.name ? item.user.name : 'Anonymous'}
-      </Text>
+      {/* User Info */}
+      <View style={styles.userInfo}>
+        {/* <Image
+          source={require('./assets/default-user.png')} // Replace with actual user profile picture if available
+          style={styles.userImage}
+        /> */}
+        <Text style={styles.userName}>{item.userId.name || 'Anonymous'}</Text> {/* Display username */}
+      </View>
+
+      {/* Post Text */}
       <Text style={styles.postText}>{item.text}</Text>
-      {item.imageUrl && <Image source={{ uri: item.imageUrl }} style={styles.postImage} />}
-      <Text style={styles.postDate}>{new Date(item.createdAt).toLocaleString()}</Text>
-      <TouchableOpacity onPress={() => likePost(item._id)} style={styles.likeButton}>
-        <Text>👍 {item.likes.length}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => editPost(item._id, 'Updated text')} style={styles.editButton}>
-        <Text>Edit</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => deletePost(item._id)} style={styles.deleteButton}>
-        <Text>Delete</Text>
-      </TouchableOpacity>
+
+      {/* Post Image (if exists) */}
+      {item.imageUrl && (
+        <Image source={{ uri: `http://192.168.0.110:5000${item.imageUrl}` }} style={styles.postImage} />
+      )}
+
+      {/* Action Buttons */}
+      <View style={styles.actionContainer}>
+        {/* Like Button */}
+        <TouchableOpacity
+          style={styles.likeButton}
+          onPress={() => likePost(item._id)}
+        >
+          <Text style={styles.likeButtonText}>
+            {item.likes.includes('userId') ? 'Unlike' : 'Like'} ({item.likes.length})
+          </Text>
+        </TouchableOpacity>
+
+        {/* Edit Button */}
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => {
+            setEditingPost(item);
+            setNewText(item.text);
+            setIsEditing(true);
+          }}
+        >
+          <Text style={styles.editButtonText}>Edit</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
-  return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="What's on your mind?"
-        value={newPostText}
-        onChangeText={setNewPostText}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Image URL (optional)"
-        value={imageUrl}
-        onChangeText={setImageUrl}
-      />
-      <Button title="Post" onPress={createPost} />
+  if (loading && currentPage === 1) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#007BFF" />
+      </View>
+    );
+  }
 
-      {loading && <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />}
-      
+  return (
+    <>
       <FlatList
         data={posts}
         renderItem={renderPost}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.postsList}
-        onEndReached={loadMorePosts} // Trigger when reaching the end
-        onEndReachedThreshold={0.5} // 50% of the list visible
+        onEndReached={loadMorePosts}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loading ? <ActivityIndicator size="small" color="#007BFF" /> : null
+        }
       />
 
-      {posts.length === 0 && !loading && <Text>No posts to display</Text>}
-    </View>
+      {/* Edit Modal */}
+      {isEditing && (
+        <Modal visible={isEditing} animationType="slide">
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Edit Post</Text>
+            <TextInput
+              style={styles.textInput}
+              value={newText}
+              onChangeText={setNewText}
+              multiline
+              placeholder="Edit your post..."
+            />
+            <Button title="Save Changes" onPress={editPost} />
+            <Button title="Cancel" onPress={() => setIsEditing(false)} color="red" />
+          </View>
+        </Modal>
+      )}
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingLeft: 8,
-    borderRadius: 5,
-  },
-  postsList: {
-    marginTop: 20,
-  },
-  postContainer: {
-    padding: 15,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-  },
-  postUser: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  postText: {
-    fontSize: 14,
-    marginVertical: 5,
-  },
-  postImage: {
-    width: '100%',
-    height: 200,
-    marginVertical: 10,
-    resizeMode: 'cover',
-  },
-  postDate: {
-    fontSize: 12,
-    color: 'gray',
-    marginBottom: 10,
-  },
-  likeButton: {
-    padding: 5,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 5,
-    alignSelf: 'flex-start',
-  },
-  editButton: {
-    padding: 5,
-    backgroundColor: '#ffb74d',
-    borderRadius: 5,
-    alignSelf: 'flex-start',
-    marginTop: 5,
-  },
-  deleteButton: {
-    padding: 5,
-    backgroundColor: '#e57373',
-    borderRadius: 5,
-    alignSelf: 'flex-start',
-    marginTop: 5,
-  },
-  loading: {
-    marginTop: 20,
-  },
+  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  postContainer: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
+  userInfo: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  userImage: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
+  userName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  postText: { fontSize: 14, color: '#555', marginBottom: 10 },
+  postImage: { width: '100%', height: 200, borderRadius: 8, marginBottom: 10 },
+  actionContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+  likeButton: { padding: 10, backgroundColor: '#007BFF', borderRadius: 8 },
+  likeButtonText: { color: '#FFF', fontSize: 14, fontWeight: 'bold' },
+  editButton: { padding: 10, backgroundColor: '#FFA500', borderRadius: 8 },
+  editButtonText: { color: '#FFF', fontSize: 14, fontWeight: 'bold' },
+  modalContainer: { flex: 1, justifyContent: 'center', padding: 20 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  textInput: { borderWidth: 1, borderColor: '#CCC', padding: 10, borderRadius: 5, marginBottom: 10, textAlignVertical: 'top' },
 });
 
 export default PostScreen;
