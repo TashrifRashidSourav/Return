@@ -66,6 +66,7 @@ import profileRoutes from './routes/profile';
 import updateProfileRoutes from './routes/updateProfile';
 import postRoutes from './routes/postRoutes';
 import chatRoutes from './routes/chatRoutes'; // Chat routes
+import userRoutes from './routes/userRoutes';
 
 // Use routes
 app.use('/register', registrationRoutes);
@@ -74,7 +75,7 @@ app.use('/profile', profileRoutes);
 app.use('/update-profile', updateProfileRoutes);
 app.use('/posts', postRoutes);
 app.use('/chats', chatRoutes); // Use chat routes
-
+app.use('/users', userRoutes);
 // Start server
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000; // Convert the port to a number if provided
 httpServer.listen(PORT, '0.0.0.0', () => {

@@ -63,7 +63,7 @@ const PostScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.103:5000/posts?page=${page}&limit=10`, {
+      const response = await fetch(`http://192.168.0.108:5000/posts?page=${page}&limit=10`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -169,7 +169,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.104:5000/posts/update/${editingPost._id}`, {
+      const response = await fetch(`http://192.168.0.108:5000/posts/update/${editingPost._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
