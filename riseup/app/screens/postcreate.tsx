@@ -30,7 +30,7 @@ const CreatePostScreen = () => {
     const newPost = { text, imageUrl };
 
     try {
-      const response = await fetch('http://192.168.0.110:5000/posts/create', {
+      const response = await fetch('http://192.168.0.104:5000/posts/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

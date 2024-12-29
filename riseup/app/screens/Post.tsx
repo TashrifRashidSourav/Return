@@ -63,7 +63,7 @@ const PostScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.110:5000/posts?page=${page}&limit=10`, {
+      const response = await fetch(`http://192.168.0.103:5000/posts?page=${page}&limit=10`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -112,7 +112,7 @@ const PostScreen = () => {
     setPosts(updatedPosts);
 
     try {
-      const response = await fetch(`http://192.168.0.110:5000/posts/like/${postId}`, {
+      const response = await fetch(`http://192.168.0.103:5000/posts/like/${postId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -143,7 +143,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.110:5000/posts/delete/${postId}`, {
+      const response = await fetch(`http://192.168.0.103:5000/posts/delete/${postId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -169,7 +169,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.110:5000/posts/update/${editingPost._id}`, {
+      const response = await fetch(`http://192.168.0.104:5000/posts/update/${editingPost._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -217,7 +217,7 @@ const PostScreen = () => {
       </View>
       <Text style={styles.postText}>{item.text}</Text>
       {item.imageUrl && (
-        <Image source={{ uri: `http://192.168.0.110:5000${item.imageUrl}` }} style={styles.postImage} />
+        <Image source={{ uri: `http://192.168.0.103:5000${item.imageUrl}` }} style={styles.postImage} />
       )}
       <View style={styles.actionContainer}>
         <TouchableOpacity
