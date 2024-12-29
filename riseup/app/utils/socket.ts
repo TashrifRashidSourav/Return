@@ -1,6 +1,6 @@
 import io from 'socket.io-client';
 
-const SOCKET_URL = 'http://192.168.0.103:5000'; // Replace with your backend URL
+const SOCKET_URL = 'http://192.168.0.108:5000'; // Replace with your backend URL
 
 let socket: any;
 

@@ -50,26 +50,26 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Meals Screen - Header hidden */}
+      {/* Chat List Screen */}
       <Tabs.Screen
-        name="ChatMessageScreen"
+        name="ChatsListScreen" // Correct name matches your file structure
         options={{
-          title: 'Chat',
-          headerShown: false, // Header hidden
+          title: 'Chats', // Title for Chats List
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'restaurant' : 'restaurant-outline'} color={color} />
+            <TabBarIcon name={focused ? 'chatbubbles' : 'chatbubbles-outline'} color={color} />
           ),
         }}
       />
 
-      {/* Users Screen - Header hidden */}
+      {/* Chat Messages Screen */}
       <Tabs.Screen
-        name="ChatListScree"
+        name="ChatMessagesScreen" // Matches the name in your file structure
         options={{
-          title: 'Users',
+          title: 'Messages',
           headerShown: false, // Header hidden
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'people' : 'people-outline'} color={color} />
+            <TabBarIcon name={focused ? 'mail' : 'mail-outline'} color={color} />
           ),
         }}
       />

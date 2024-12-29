@@ -30,7 +30,7 @@ const EditProfileScreen = () => {
         return;
       }
 
-      const response = await fetch('http://192.168.0.104:5000/profile', {
+      const response = await fetch('http://192.168.0.108:5000/profile', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -94,7 +94,7 @@ const EditProfileScreen = () => {
         } as any);
       }
 
-      const response = await fetch('http://10.10.200.30:5000', {
+      const response = await fetch('http://192.168.0.108:5000', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
