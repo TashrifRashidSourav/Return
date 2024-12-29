@@ -52,9 +52,9 @@ export default function TabLayout() {
 
       {/* Meals Screen - Header hidden */}
       <Tabs.Screen
-        name="MealScreen"
+        name="ChatMessageScreen"
         options={{
-          title: 'Meals',
+          title: 'Chat',
           headerShown: false, // Header hidden
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'restaurant' : 'restaurant-outline'} color={color} />
@@ -64,7 +64,7 @@ export default function TabLayout() {
 
       {/* Users Screen - Header hidden */}
       <Tabs.Screen
-        name="users"
+        name="ChatListScree"
         options={{
           title: 'Users',
           headerShown: false, // Header hidden
