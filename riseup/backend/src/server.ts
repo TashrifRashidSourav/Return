@@ -53,19 +53,8 @@ io.on('connection', (socket) => {
     }
 
     const message = { chatId, senderId, text, createdAt: new Date() };
-    io.to(chatId).emit('messageReceived', message);
+    io.to(chatId).emit('messageReceived', message); // Emit the 'messageReceived' event to the room
     console.log('Message sent:', message);
-  });
-
-  // Notify real-time updates for routine scheduling
-  socket.on('updateRoutine', ({ userId, routine }) => {
-    if (!userId || !routine) {
-      console.error('Invalid routine update data');
-      return;
-    }
-
-    io.emit('routineUpdated', { userId, routine }); // Broadcast routine updates to all connected users
-    console.log(`Routine updated for user ${userId}:`, routine);
   });
 
   socket.on('disconnect', () => {

@@ -3,7 +3,7 @@ import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Message from './models/message';
-import { Chat} from './models/chat';
+import { Chat } from './models/chat';
 
 // Load environment variables
 dotenv.config();
@@ -27,13 +27,13 @@ io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
   // Join a specific chat room
-  socket.on('joinRoom', ({ chatId }) => {
+  socket.on('joinRoom', ({ chatId }: { chatId: string }) => {
     socket.join(chatId);
     console.log(`User joined room: ${chatId}`);
   });
 
   // Handle sending a message
-  socket.on('sendMessage', async ({ chatId, senderId, text }) => {
+  socket.on('sendMessage', async ({ chatId, senderId, text }: { chatId: string, senderId: string, text: string }) => {
     if (!chatId || !senderId || !text) {
       console.error('Missing required fields for message');
       return;
