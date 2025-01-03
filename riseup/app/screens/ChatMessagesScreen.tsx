@@ -1,89 +1,137 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRoute } from '@react-navigation/native';
 
 interface Message {
   _id: string;
-  senderId: string;
-  receiverId: string;
-  message: string;
+  senderId: { _id?: string; name?: string };
+  text: string;
   createdAt: string;
 }
 
-const ChatMessagesScreen = () => {
-  const { chatId } = useLocalSearchParams();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+const ChatMessagesScreen: React.FC = () => {
+  const route = useRoute();
+  const { chatId, receiverName } = route.params as { chatId: string; receiverName: string };
 
-  const getToken = async () => {
-    const token = await AsyncStorage.getItem('authToken');
-    if (!token) throw new Error('No token found');
-    return token;
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [newMessage, setNewMessage] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Fetch token and user ID from AsyncStorage
+  const initializeUser = async (): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) throw new Error('No token found');
+
+      const tokenPayload = JSON.parse(atob(token.split('.')[1])); // Decode JWT payload
+      setUserId(tokenPayload.id);
+    } catch (err) {
+      Alert.alert('Error', 'Token not found or invalid. Please log in again.');
+      setError('Failed to initialize user.');
+    }
   };
 
+  // Fetch messages from the server
   const fetchMessages = async () => {
-    const token = await getToken();
-
-    setLoading(true);
     try {
-      const response = await fetch(`http://192.168.56.1:5000/chats/${chatId}/messages`, {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) throw new Error('No token found');
+
+      const response = await fetch(`http://192.168.0.105:5000/chats/${chatId}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
       setMessages(data.messages);
-    } catch (error: any) {
-      console.error('Error fetching messages:', error.message);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch messages.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Send a new message
   const sendMessage = async () => {
-    const token = await getToken();
+    if (!newMessage.trim()) {
+      setError('Message cannot be empty.');
+      return;
+    }
 
     try {
-      const response = await fetch(`http://192.168.0.108:5000/chats`, {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) throw new Error('No token found');
+
+      const response = await fetch(`http://192.168.0.105:5000/chats/${chatId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ receiverId: chatId, message: newMessage }),
+        body: JSON.stringify({ text: newMessage }),
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
-      setMessages((prev) => [...prev, data.chat]);
+      setMessages((prev) => [...prev, data.newMessage]);
       setNewMessage('');
-    } catch (error: any) {
-      console.error('Error sending message:', error.message);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send message.');
     }
   };
 
   useEffect(() => {
+    initializeUser();
     fetchMessages();
   }, []);
 
+  const renderMessageItem = ({ item }: { item: Message }) => (
+    <View
+      style={[
+        styles.messageItem,
+        item.senderId?._id === userId ? styles.myMessage : styles.theirMessage,
+      ]}
+    >
+      <Text style={styles.messageSender}>
+        {item.senderId?.name || 'Unknown User'}
+      </Text>
+      <Text style={styles.messageText}>{item.text}</Text>
+      <Text style={styles.timestamp}>{new Date(item.createdAt).toLocaleTimeString()}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <FlatList
-        data={messages}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <View style={styles.messageItem}>
-            <Text>{item.senderId === chatId ? 'You' : 'Them'}: {item.message}</Text>
-          </View>
-        )}
-      />
+      <Text style={styles.receiverName}>{receiverName}</Text>
+      {loading ? (
+        <ActivityIndicator size="large" />
+      ) : (
+        <FlatList
+          data={messages}
+          keyExtractor={(item) => item._id}
+          renderItem={renderMessageItem}
+          style={styles.messagesList}
+        />
+      )}
+      {error && <Text style={styles.errorText}>{error}</Text>}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Type a message..."
+          placeholder="Type your message..."
           value={newMessage}
           onChangeText={setNewMessage}
         />
@@ -96,12 +144,26 @@ const ChatMessagesScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10 },
-  messageItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ccc' },
-  inputContainer: { flexDirection: 'row', padding: 10 },
-  input: { flex: 1, borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 5 },
-  sendButton: { backgroundColor: '#007bff', padding: 10, borderRadius: 5, marginLeft: 10 },
-  sendButtonText: { color: 'white' },
+  container: { flex: 1, padding: 10, backgroundColor: '#fff' },
+  receiverName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'green',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  messagesList: { flex: 1 },
+  messageItem: { padding: 10, marginVertical: 5, borderRadius: 8 },
+  myMessage: { alignSelf: 'flex-end', backgroundColor: '#d1f1d1' },
+  theirMessage: { alignSelf: 'flex-start', backgroundColor: '#f1f1f1' },
+  messageSender: { fontSize: 12, color: '#555', marginBottom: 2 },
+  messageText: { fontSize: 16 },
+  timestamp: { fontSize: 12, color: '#555', textAlign: 'right' },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', paddingVertical: 5 },
+  input: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 8, marginRight: 5 },
+  sendButton: { backgroundColor: 'green', padding: 10, borderRadius: 5 },
+  sendButtonText: { color: '#fff', fontSize: 16 },
+  errorText: { color: 'red', textAlign: 'center', marginVertical: 5 },
 });
 
 export default ChatMessagesScreen;

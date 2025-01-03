@@ -88,9 +88,9 @@ router.put('/like/:id', authenticate, async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to like/unlike post' });
   }
 });
+ 
 
-
-// Update a post
+//   a post
 router.put('/update/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

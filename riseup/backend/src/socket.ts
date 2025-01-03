@@ -1,62 +1,71 @@
-import { Server as IOServer, Socket } from 'socket.io';
-import http from 'http';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import Message from './models/message';
+import { Chat} from './models/chat';
 
-interface UserSocketMap {
-  [userId: string]: string; // Maps user ID to their socket ID
-}
+// Load environment variables
+dotenv.config();
 
-const userSocketMap: UserSocketMap = {};
+// MongoDB connection
+const MONGO_URI = process.env.MONGO_URI || '';
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
-// Initialize the Socket.IO server
-const initializeSocket = (server: http.Server) => {
-  const io = new IOServer(server, {
-    cors: {
-      origin: '*', // Allows all origins for now, you can restrict this
-    },
+// Create HTTP and Socket.IO servers
+const httpServer = createServer();
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+  },
+});
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  // Join a specific chat room
+  socket.on('joinRoom', ({ chatId }) => {
+    socket.join(chatId);
+    console.log(`User joined room: ${chatId}`);
   });
 
-  io.on('connection', (socket: Socket) => {
-    console.log('A user connected:', socket.id);
+  // Handle sending a message
+  socket.on('sendMessage', async ({ chatId, senderId, text }) => {
+    if (!chatId || !senderId || !text) {
+      console.error('Missing required fields for message');
+      return;
+    }
 
-    // Event: User joins with their userId
-    socket.on('join', (userId: string) => {
-      userSocketMap[userId] = socket.id;
-      console.log(`User ${userId} joined with socket ID ${socket.id}`);
-    });
+    try {
+      // Save the message to the database
+      const message = await new Message({
+        chat: chatId,
+        sender: senderId,
+        content: text,
+      }).save();
 
-    // Event: Sending a message
-    socket.on('sendMessage', (data: { senderId: string; receiverId: string; message: string }) => {
-      const { senderId, receiverId, message } = data;
+      // Update the chat's `updatedAt` field
+      await Chat.findByIdAndUpdate(chatId, { updatedAt: new Date() });
 
-      // Find the receiver's socket ID
-      const receiverSocketId = userSocketMap[receiverId];
-      if (receiverSocketId) {
-        // Send the message to the receiver
-        io.to(receiverSocketId).emit('receiveMessage', {
-          senderId,
-          message,
-        });
-        console.log(`Message sent from ${senderId} to ${receiverId}`);
-      } else {
-        console.log(`User ${receiverId} is offline`);
-      }
-    });
-
-    // Event: User disconnects
-    socket.on('disconnect', () => {
-      console.log('A user disconnected:', socket.id);
-
-      // Remove the user from the userSocketMap
-      for (const userId in userSocketMap) {
-        if (userSocketMap[userId] === socket.id) {
-          delete userSocketMap[userId];
-          console.log(`User ${userId} removed from socket map`);
-        }
-      }
-    });
+      // Broadcast the message to the chat room
+      io.to(chatId).emit('messageReceived', message);
+      console.log('Message sent:', message);
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
   });
 
-  return io;
-};
+  // Handle user disconnect
+  socket.on('disconnect', () => {
+    console.log('A user disconnected:', socket.id);
+  });
+});
 
-export default initializeSocket;
+// Start server
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
+});

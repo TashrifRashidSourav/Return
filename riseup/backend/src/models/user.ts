@@ -6,6 +6,15 @@ interface IUser extends Document {
   password: string;
   online: boolean;
   chats: mongoose.Types.ObjectId[]; // Array of chat IDs the user is a part of
+  preferences?: {
+    learningPriority: string; // Example: 'React', 'Python', 'Data Science'
+    productivityTips: boolean; // Whether to suggest productivity tips
+  };
+  dailySchedule?: Array<{
+    activity: string;
+    startTime: string; // e.g., '15:00'
+    endTime: string; // e.g., '19:00'
+  }>;
 }
 
 const userSchema = new Schema<IUser>({
@@ -14,6 +23,17 @@ const userSchema = new Schema<IUser>({
   password: { type: String, required: true },
   online: { type: Boolean, default: false }, // Track if the user is online
   chats: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }], // References to chats
+  preferences: {
+    learningPriority: { type: String, default: '' },
+    productivityTips: { type: Boolean, default: true },
+  },
+  dailySchedule: [
+    {
+      activity: { type: String, required: true },
+      startTime: { type: String, required: true },
+      endTime: { type: String, required: true },
+    },
+  ],
 });
 
 // Use existing model if already compiled, or create a new one
