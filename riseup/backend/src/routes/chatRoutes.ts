@@ -9,10 +9,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'defaultsecret';
 
 let io: SocketIOServer;
 
-// Socket authentication middleware
+// **Socket Authentication Middleware**
 const authenticateSocket = (socket: Socket, next: (err?: Error) => void) => {
   const token = socket.handshake.auth.token || socket.handshake.query.token;
-  
   if (!token) {
     return next(new Error('Authentication token is required'));
   }
@@ -26,69 +25,44 @@ const authenticateSocket = (socket: Socket, next: (err?: Error) => void) => {
   }
 };
 
+// **Initialize Socket Server**
 export const initializeSocketServer = (server: SocketIOServer) => {
   io = server;
-  
-  // Apply authentication middleware
   io.use(authenticateSocket);
 
   io.on('connection', (socket: Socket) => {
     console.log('User connected:', socket.data.user.id);
 
-    // Handle joining chat rooms
+    // **Join Chat Room**
     socket.on('joinRoom', ({ chatId }: { chatId: string }) => {
       socket.join(chatId);
       console.log(`User ${socket.data.user.id} joined chat: ${chatId}`);
     });
 
-    // Handle leaving chat rooms
-    socket.on('leaveRoom', ({ chatId }: { chatId: string }) => {
-      socket.leave(chatId);
-      console.log(`User ${socket.data.user.id} left chat: ${chatId}`);
-    });
-
-    // Handle new messages
-    socket.on('sendMessage', async (payload: {
-      chatId: string;
-      text: string;
-      receiverId: string;
-    }) => {
+    // **Send Message**
+    socket.on('sendMessage', async (payload: { chatId: string; text: string }) => {
       try {
-        const { chatId, text, receiverId } = payload;
+        const { chatId, text } = payload;
         const senderId = socket.data.user.id;
 
-        // Save message to database
-        const newMessage = new Message({
-          chat: chatId,
-          sender: senderId,
-          text,
-        });
+        const newMessage = new Message({ chat: chatId, sender: senderId, text });
         await newMessage.save();
 
-        // Update chat's lastMessage and updatedAt
         await Chat.findByIdAndUpdate(chatId, {
           lastMessage: newMessage._id,
           updatedAt: new Date(),
         });
 
-        // Populate sender information
         await newMessage.populate('sender', '_id name');
 
-        // Emit message to room
         io.to(chatId).emit('message', newMessage);
-
-        // Emit typing stopped event
-        socket.to(chatId).emit('userStoppedTyping', { userId: senderId });
-
       } catch (error) {
         console.error('Error handling new message:', error);
-        socket.emit('messageError', {
-          error: 'Failed to send message',
-        });
+        socket.emit('messageError', { error: 'Failed to send message' });
       }
     });
 
-    // Handle typing indicators
+    // **Typing Indicators**
     socket.on('typing', ({ chatId }: { chatId: string }) => {
       socket.to(chatId).emit('userTyping', { userId: socket.data.user.id });
     });
@@ -97,17 +71,16 @@ export const initializeSocketServer = (server: SocketIOServer) => {
       socket.to(chatId).emit('userStoppedTyping', { userId: socket.data.user.id });
     });
 
-    // Handle disconnection
+    // **Handle Disconnection**
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.data.user.id);
     });
   });
 };
 
-// Helper function to authenticate HTTP requests
+// **Authenticate HTTP Requests**
 const authenticateRequest = (req: Request, res: Response): { isValid: boolean; user?: any } => {
   const authHeader = req.headers.authorization;
-
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({ message: 'Authorization token missing or invalid' });
     return { isValid: false };
@@ -118,13 +91,12 @@ const authenticateRequest = (req: Request, res: Response): { isValid: boolean; u
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     return { isValid: true, user: decoded };
   } catch (error) {
-    console.error('Token verification error:', error);
     res.status(401).json({ message: 'Invalid or expired token' });
     return { isValid: false };
   }
 };
 
-// Error handling helper
+// **Error Handling**
 const handleError = (error: unknown, res: Response, message: string) => {
   if (error instanceof Error) {
     console.error(`${message}: ${error.message}`);
@@ -135,7 +107,8 @@ const handleError = (error: unknown, res: Response, message: string) => {
   }
 };
 
-// Route: Get messages for a chat
+// **Routes**
+// Get Messages
 router.get('/:chatId/messages', async (req: Request, res: Response) => {
   const auth = authenticateRequest(req, res);
   if (!auth.isValid) return;
@@ -157,18 +130,14 @@ router.get('/:chatId/messages', async (req: Request, res: Response) => {
 
     res.status(200).json({
       messages: messages.reverse(),
-      pagination: {
-        total,
-        page: Number(page),
-        pages: Math.ceil(total / Number(limit))
-      }
+      pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)) },
     });
   } catch (error) {
     handleError(error, res, 'Error fetching messages');
   }
 });
 
-// Route: Send a message
+// Send Message
 router.post('/:chatId/messages', async (req: Request, res: Response) => {
   const auth = authenticateRequest(req, res);
   if (!auth.isValid) return;
@@ -187,23 +156,13 @@ router.post('/:chatId/messages', async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Chat not found' });
     }
 
-    if (!chat.members.includes(senderId)) {
-      return res.status(403).json({ message: 'User is not a member of this chat' });
-    }
-
-    const newMessage = new Message({
-      chat: chatId,
-      sender: senderId,
-      text: text.trim()
-    });
-
+    const newMessage = new Message({ chat: chatId, sender: senderId, text });
     await newMessage.save();
     await newMessage.populate('sender', '_id name');
 
-    // Update chat's lastMessage and updatedAt
     await Chat.findByIdAndUpdate(chatId, {
       lastMessage: newMessage._id,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     res.status(201).json({ message: 'Message sent', newMessage });
@@ -212,7 +171,7 @@ router.post('/:chatId/messages', async (req: Request, res: Response) => {
   }
 });
 
-// Route: Start or get a chat
+// Start Chat
 router.post('/start', async (req: Request, res: Response) => {
   const auth = authenticateRequest(req, res);
   if (!auth.isValid) return;
@@ -220,23 +179,11 @@ router.post('/start', async (req: Request, res: Response) => {
   const { receiverId } = req.body;
   const senderId = auth.user.id;
 
-  if (!receiverId) {
-    return res.status(400).json({ message: 'Receiver ID is required' });
-  }
-
-  if (receiverId === senderId) {
-    return res.status(400).json({ message: 'Cannot start chat with yourself' });
-  }
-
   try {
-    let chat = await Chat.findOne({
-      members: { $all: [senderId, receiverId] }
-    }).populate('members', '_id name');
-
+    let chat = await Chat.findOne({ members: { $all: [senderId, receiverId] } });
     if (!chat) {
       chat = new Chat({ members: [senderId, receiverId] });
       await chat.save();
-      await chat.populate('members', '_id name');
     }
 
     res.status(200).json({ chat });
@@ -245,7 +192,7 @@ router.post('/start', async (req: Request, res: Response) => {
   }
 });
 
-// Route: Get user's chats
+// Get User Chats
 router.get('/', async (req: Request, res: Response) => {
   const auth = authenticateRequest(req, res);
   if (!auth.isValid) return;
@@ -255,7 +202,7 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const chats = await Chat.find({ members: userId })
       .populate('members', '_id name')
-      .populate('lastMessage')
+      .populate('lastMessage', '_id text sender createdAt')
       .sort({ updatedAt: -1 })
       .exec();
 
