@@ -42,7 +42,7 @@ const ChatMessagesScreen: React.FC = () => {
         const tokenPayload = JSON.parse(atob(token.split('.')[1]));
         setUserId(tokenPayload.id);
 
-        const newSocket = io('http://192.168.0.105:5000', {
+        const newSocket = io('http://192.168.0.109:5000', {
           query: { token },
         });
         setSocket(newSocket);
@@ -67,7 +67,7 @@ const ChatMessagesScreen: React.FC = () => {
         const token = await AsyncStorage.getItem('authToken');
         if (!token) throw new Error('No token found');
 
-        const response = await fetch(`http://192.168.0.105:5000/chats/${chatId}/messages`, {
+        const response = await fetch(`http://192.168.0.109:5000/chats/${chatId}/messages`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -103,7 +103,7 @@ const ChatMessagesScreen: React.FC = () => {
       const token = await AsyncStorage.getItem('authToken');
       if (!token) throw new Error('No token found');
 
-      const response = await fetch(`http://192.168.0.105:5000/chats/${chatId}/messages`, {
+      const response = await fetch(`http://192.168.0.109:5000/chats/${chatId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

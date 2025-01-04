@@ -19,15 +19,17 @@ const authenticateRequest = (req: Request): { userId?: string; error?: string } 
   }
 };
 
-// Fetch all routines
-router.get('/', async (req: Request, res: Response) => {
+// Route: Fetch routines for a specific date
+router.get('/:date', async (req: Request, res: Response) => {
   const { userId, error } = authenticateRequest(req);
   if (error) {
     return res.status(401).json({ message: error });
   }
 
+  const { date } = req.params;
+
   try {
-    const routines = await Routine.find({ userId });
+    const routines = await Routine.find({ userId, date }).sort({ startTime: 1 });
     res.status(200).json({ routines });
   } catch (err) {
     console.error('Error fetching routines:', err);
@@ -35,20 +37,21 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Add a new routine
+// Route: Add a new routine
 router.post('/', async (req: Request, res: Response) => {
   const { userId, error } = authenticateRequest(req);
   if (error) {
     return res.status(401).json({ message: error });
   }
 
-  const { time, activity } = req.body;
-  if (!time || !activity) {
-    return res.status(400).json({ message: 'Time and activity are required' });
+  const { date, startTime, endTime, activity } = req.body;
+
+  if (!date || !startTime || !endTime || !activity) {
+    return res.status(400).json({ message: 'Date, start time, end time, and activity are required' });
   }
 
   try {
-    const newRoutine = new Routine({ userId, time, activity });
+    const newRoutine = new Routine({ userId, date, startTime, endTime, activity });
     await newRoutine.save();
     res.status(201).json({ routine: newRoutine });
   } catch (err) {
@@ -57,7 +60,7 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// Delete a routine
+// Route: Delete a routine
 router.delete('/:id', async (req: Request, res: Response) => {
   const { userId, error } = authenticateRequest(req);
   if (error) {
@@ -65,6 +68,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 
   const { id } = req.params;
+
   try {
     const routine = await Routine.findOneAndDelete({ _id: id, userId });
     if (!routine) {
@@ -74,6 +78,22 @@ router.delete('/:id', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('Error deleting routine:', err);
     res.status(500).json({ message: 'Failed to delete routine' });
+  }
+});
+
+// Route: Fetch all routines (optional, for debugging)
+router.get('/', async (req: Request, res: Response) => {
+  const { userId, error } = authenticateRequest(req);
+  if (error) {
+    return res.status(401).json({ message: error });
+  }
+
+  try {
+    const routines = await Routine.find({ userId }).sort({ date: 1, startTime: 1 });
+    res.status(200).json({ routines });
+  } catch (err) {
+    console.error('Error fetching all routines:', err);
+    res.status(500).json({ message: 'Failed to fetch routines' });
   }
 });
 

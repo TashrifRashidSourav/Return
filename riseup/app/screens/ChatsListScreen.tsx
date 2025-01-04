@@ -67,7 +67,7 @@ const ChatsListScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.105:5000/chats`, {
+      const response = await fetch(`http://192.168.0.109:5000/chats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -94,7 +94,7 @@ const ChatsListScreen = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://192.168.0.105:5000/users/search?name=${encodeURIComponent(searchText.trim())}`,
+        `http://192.168.0.109:5000/users/search?name=${encodeURIComponent(searchText.trim())}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -114,7 +114,7 @@ const ChatsListScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.105:5000/chats/start`, {
+      const response = await fetch(`http://192.168.0.109:5000/chats/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
