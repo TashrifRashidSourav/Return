@@ -30,14 +30,14 @@ const PostCreateScreen = () => {
     return token;
   };
 
-  // Fetch posts
+  // Fetch user-specific posts
   const fetchPosts = async () => {
     setLoading(true);
     const token = await getToken();
     if (!token) return;
 
     try {
-      const response = await fetch('http://192.168.0.104:5000/api/posts', {
+      const response = await fetch('http://192.168.0.104:5000/api/posts/my-posts', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -46,7 +46,7 @@ const PostCreateScreen = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
-      setPosts(data.posts);
+      setPosts(data); // Assuming backend returns an array of posts
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to load posts.');
     } finally {
@@ -139,8 +139,10 @@ const PostCreateScreen = () => {
         },
       });
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message);
+      }
 
       Alert.alert('Success', 'Post deleted successfully!');
       fetchPosts();

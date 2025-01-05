@@ -17,6 +17,7 @@ const authenticate = (req: Request, res: Response, next: any) => {
     (req as any).user = decoded;
     next();
   } catch (error) {
+    console.error('Authentication error:', error);
     res.status(401).json({ message: 'Invalid token' });
   }
 };
@@ -75,7 +76,7 @@ router.post(
   }
 );
 
-// Route: Get all posts
+// Route: Get all posts (with pagination)
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -98,6 +99,22 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching posts:', error);
+    res.status(500).json({ message: 'Failed to fetch posts' });
+  }
+});
+
+// Route: Get user-specific posts
+router.get('/my-posts', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+
+    const posts = await Post.find({ userId })
+      .populate('userId', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json(posts);
+  } catch (error) {
+    console.error('Error fetching user-specific posts:', error);
     res.status(500).json({ message: 'Failed to fetch posts' });
   }
 });
