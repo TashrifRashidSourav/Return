@@ -174,6 +174,7 @@ router.delete('/delete/:id', authenticate, async (req: Request, res: Response) =
     if (!post) return res.status(404).json({ message: 'Post not found or unauthorized' });
 
     res.status(200).json({ message: 'Post deleted successfully' });
+    
   } catch (error) {
     console.error('Error deleting post:', error);
     res.status(500).json({ message: 'Failed to delete post' });
