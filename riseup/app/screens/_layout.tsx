@@ -10,79 +10,89 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: 'blue', // Change active tab color to blue
-        headerShown: false, // Default for all screens is no header
+        tabBarActiveTintColor: 'blue', // Active tab color set to blue
+        headerShown: false, // Default: no header
       }}
     >
-      {/* Profile Screen - Header shown */}
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile', // Correct title for the screen
-          headerShown: true, // Show header for the Profile screen
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
-          ),
-        }}
-      />
 
-      {/* Update Profile Screen - Header hidden */}
-      <Tabs.Screen
-        name="updateprofile"
-        options={{
-          title: 'Update Profile',
-          headerShown: false, // Header hidden
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'refresh' : 'refresh-outline'} color={color} />
-          ),
-        }}
-      />
-
-      {/* Post Screen - Header hidden */}
-      <Tabs.Screen
+         {/* Post Screen with Home Icon */}
+         <Tabs.Screen
         name="Post"
         options={{
+          title: 'Home', // Updated Title for Home
+          headerShown: false, // No header for Home
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+          ),
+        }}
+      />
+     <Tabs.Screen
+        name="postcreate"
+        options={{
           title: 'Post',
-          headerShown: false, // Header hidden
+          headerShown: false, // No header for Post
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'create' : 'create-outline'} color={color} />
           ),
         }}
       />
 
-      {/* Chat List Screen */}
+      {/* Profile Screen - Header shown */}
       <Tabs.Screen
-        name="ChatsListScreen" // Correct name matches your file structure
+        name="profile"
         options={{
-          title: 'Chats', // Title for Chats List
-          headerShown: false,
+          title: 'Profile', // Title for the Profile screen
+          headerShown: true, // Show header for Profile screen
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
+          ),
+        }}
+      />
+
+      {/* Update Profile Screen */}
+      <Tabs.Screen
+        name="updateprofile"
+        options={{
+          title: 'Update Profile',
+          headerShown: false, // No header for Update Profile
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'refresh' : 'refresh-outline'} color={color} />
+          ),
+        }}
+      />
+
+
+      {/* Chats List Screen */}
+      <Tabs.Screen
+        name="ChatsListScreen"
+        options={{
+          title: 'Chats',
+          headerShown: false, // No header for Chats
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'chatbubbles' : 'chatbubbles-outline'} color={color} />
           ),
         }}
       />
 
-      {/* Chat Messages Screen */}
+      {/* Routine Manager Screen */}
       <Tabs.Screen
-        name="ChatMessagesScreen" // Matches the name in your file structure
+        name="RoutineManagerScreen"
         options={{
-          title: 'Messages',
-          headerShown: false, // Header hidden
+          title: 'Routine',
+          headerShown: false, // No header for Routine
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'mail' : 'mail-outline'} color={color} />
-          ),
+            <TabBarIcon name={focused ? 'calendar' : 'calendar-outline'} color={color} />
+          ), // Using calendar icons for Routine
         }}
       />
 
-      {/* Wallet Screen - Header hidden */}
+      {/* Message Screen - Hidden from Tab Bar */}
       <Tabs.Screen
-        name="wallet"
+        name="ChatMessagesScreen"
         options={{
-          title: 'Wallet',
-          headerShown: false, // Header hidden
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'wallet' : 'wallet-outline'} color={color} />
-          ),
+          title: 'Messages',
+          headerShown: false, // No header for Messages
+          tabBarButton: () => null, // Hide from the Tab Bar
         }}
       />
     </Tabs>

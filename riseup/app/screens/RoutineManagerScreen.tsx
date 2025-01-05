@@ -60,7 +60,7 @@ const RoutineScreen: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://192.168.0.109:5000/routines/${formatDate(date)}`,
+        `http://192.168.0.104:5000/routines/${formatDate(date)}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -88,7 +88,7 @@ const RoutineScreen: React.FC = () => {
     if (!token) return;
 
     try {
-      const response = await fetch('http://192.168.0.109:5000/routines', {
+      const response = await fetch('http://192.168.0.104:5000/routines', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ const RoutineScreen: React.FC = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.109:5000/routines/${id}`, {
+      const response = await fetch(`http://192.168.0.104:5000/routines/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

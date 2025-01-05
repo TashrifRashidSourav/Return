@@ -77,7 +77,7 @@ app.use('/register', registrationRoutes);
 app.use('/login', authenticationRoutes);
 app.use('/profile', profileRoutes);
 app.use('/update-profile', updateProfileRoutes);
-app.use('/posts', postRoutes);
+app.use('/api/posts', postRoutes);
 app.use('/chats', chatRoutes);
 app.use('/users', userRoutes);
 app.use('/routines', scheduleRoutes); // Add schedule routes
