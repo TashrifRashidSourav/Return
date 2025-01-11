@@ -67,7 +67,7 @@ const PostScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.104:5000/api/posts?page=${page}&limit=10`, {
+      const response = await fetch(`http://10.10.201.145:5000/api/posts?page=${page}&limit=10`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -119,7 +119,7 @@ const PostScreen = () => {
     setPosts(updatedPosts);
 
     try {
-      const response = await fetch(`http://192.168.0.104:5000/api/posts/like/${postId}`, {
+      const response = await fetch(`http://10.10.201.145:5000/api/posts/like/${postId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -152,7 +152,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.104:5000/api/posts/delete/${postId}`, {
+      const response = await fetch(`http://10.10.201.145:5000/api/posts/delete/${postId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -182,7 +182,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.104:5000/api/posts/update/${editingPost._id}`, {
+      const response = await fetch(`http://10.10.201.145:5000/api/posts/update/${editingPost._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -233,7 +233,7 @@ const PostScreen = () => {
       <Text style={styles.postText}>{item.text}</Text>
       {item.imageUrl && (
         <Image
-          source={{ uri: `http://192.168.0.104:5000${item.imageUrl}` }}
+          source={{ uri: `http://10.10.201.145:5000${item.imageUrl}` }}
           style={styles.postImage}
         />
       )}

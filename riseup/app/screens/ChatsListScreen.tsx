@@ -8,6 +8,7 @@ import {
   Alert,
   StyleSheet,
   TextInput,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -32,7 +33,6 @@ const ChatsListScreen = () => {
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Get the JWT token
   const getToken = async (): Promise<string | null> => {
     try {
       const token = await AsyncStorage.getItem('authToken');
@@ -47,7 +47,6 @@ const ChatsListScreen = () => {
     }
   };
 
-  // Fetch current user's ID from token
   const fetchCurrentUserId = async () => {
     const token = await getToken();
     if (!token) return;
@@ -60,14 +59,13 @@ const ChatsListScreen = () => {
     }
   };
 
-  // Fetch chats
   const fetchChats = async () => {
     const token = await getToken();
     if (!token) return;
 
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.104:5000/chats`, {
+      const response = await fetch(`http://10.10.201.127:5000/chats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -81,7 +79,6 @@ const ChatsListScreen = () => {
     }
   };
 
-  // Search users by name
   const searchUsers = async () => {
     const token = await getToken();
     if (!token) return;
@@ -94,7 +91,7 @@ const ChatsListScreen = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://192.168.0.104:5000/users/search?name=${encodeURIComponent(searchText.trim())}`,
+        `http://10.10.201.127:5000/users/search?name=${encodeURIComponent(searchText.trim())}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -108,13 +105,12 @@ const ChatsListScreen = () => {
     }
   };
 
-  // Start a new chat
   const startChat = async (userId: string) => {
     const token = await getToken();
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.104:5000/chats/start`, {
+      const response = await fetch(`http://10.10.201.127:5000/chats/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,63 +133,121 @@ const ChatsListScreen = () => {
     fetchChats();
   }, []);
 
-  const renderChatItem = ({ item }: { item: Chat }) => {
-    const otherMember = item.members.find((member) => member._id !== currentUserId);
-    return (
-      <TouchableOpacity
-        style={styles.chatItem}
-        onPress={() =>
-          router.push({ pathname: './ChatMessagesScreen', params: { chatId: item._id, receiverName: otherMember?.name || 'Unknown' } })
-        }
-      >
-        <Text style={styles.chatName}>{otherMember?.name || 'Unknown User'}</Text>
-        {item.lastMessage && (
-          <>
-            <Text style={styles.lastMessage}>{item.lastMessage.content || 'No message yet'}</Text>
-            <Text style={styles.lastMessageTime}>
-              {new Date(item.lastMessage.createdAt).toLocaleString()}
-            </Text>
-          </>
-        )}
-      </TouchableOpacity>
-    );
-  };
-
   const renderUserItem = ({ item }: { item: User }) => (
     <TouchableOpacity style={styles.userItem} onPress={() => startChat(item._id)}>
-      <Text style={styles.userName}>{item.name}</Text>
+      <View style={styles.userRow}>
+        <View style={styles.avatarContainer}>
+          <Image
+            style={styles.userAvatar}
+            source={{ uri: 'https://via.placeholder.com/50' }}
+          />
+          <View style={styles.statusDot} />
+        </View>
+        <Text style={styles.userName}>{item.name}</Text>
+      </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search users..."
-        value={searchText}
-        onChangeText={setSearchText}
-        onSubmitEditing={searchUsers}
-      />
-      {searchResults.length > 0 ? (
-        <FlatList data={searchResults} keyExtractor={(item) => item._id} renderItem={renderUserItem} />
-      ) : loading ? (
-        <ActivityIndicator size="large" />
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search"
+          value={searchText}
+          onChangeText={setSearchText}
+          onSubmitEditing={searchUsers}
+        />
+      </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#41D3BD" />
+      ) : searchResults.length > 0 ? (
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item) => item._id}
+          renderItem={renderUserItem}
+          contentContainerStyle={styles.listContainer}
+        />
       ) : (
-        <FlatList data={chats} keyExtractor={(item) => item._id} renderItem={renderChatItem} />
+        <Text style={styles.noDataText}>No users found.</Text>
       )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10 },
-  searchInput: { height: 40, borderColor: '#ccc', borderWidth: 1, borderRadius: 5, marginBottom: 10, paddingHorizontal: 10 },
-  chatItem: { padding: 15, backgroundColor: '#f9f9f9', marginBottom: 5, borderRadius: 5 },
-  chatName: { fontWeight: 'bold', fontSize: 16 },
-  lastMessage: { fontSize: 14, color: '#555' },
-  lastMessageTime: { fontSize: 12, color: '#999', marginTop: 5 },
-  userItem: { padding: 15, backgroundColor: '#f0f0f0', marginBottom: 5, borderRadius: 5 },
-  userName: { fontWeight: 'bold', fontSize: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F9F9',
+  },
+  searchContainer: {
+    padding: 10,
+    paddingTop: 20,
+    backgroundColor: '#41D3BD',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  searchInput: {
+    height: 40,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    elevation: 3,
+  },
+  listContainer: {
+    padding: 10,
+  },
+  userItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    elevation: 3,
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 10,
+  },
+  userAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ccc',
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#41D3BD',
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  noDataText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#555',
+  },
 });
 
 export default ChatsListScreen;

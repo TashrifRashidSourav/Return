@@ -37,7 +37,7 @@ const PostCreateScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch('http://192.168.0.104:5000/api/posts/my-posts', {
+      const response = await fetch('http://10.10.201.145:5000/api/posts/my-posts', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -96,8 +96,8 @@ const PostCreateScreen = () => {
       }
 
       const url = editingPost
-        ? `http://192.168.0.104:5000/api/posts/update/${editingPost}`
-        : 'http://192.168.0.104:5000/api/posts/create';
+        ? `http://10.10.201.145:5000/api/posts/update/${editingPost}`
+        : 'http://10.10.201.145:5000/api/posts/create';
 
       const method = editingPost ? 'PUT' : 'POST';
 
@@ -132,7 +132,7 @@ const PostCreateScreen = () => {
       const token = await getToken();
       if (!token) return;
 
-      const response = await fetch(`http://192.168.0.104:5000/api/posts/delete/${postId}`, {
+      const response = await fetch(`http://10.10.201.145:5000/api/posts/delete/${postId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -156,7 +156,7 @@ const PostCreateScreen = () => {
   // Edit post
   const handleEditPost = (post: any) => {
     setText(post.text);
-    setImage(post.imageUrl ? `http://192.168.0.104:5000${post.imageUrl}` : null);
+    setImage(post.imageUrl ? `http://10.10.201.145:5000${post.imageUrl}` : null);
     setEditingPost(post._id);
   };
 
@@ -198,7 +198,7 @@ const PostCreateScreen = () => {
         posts.map((post) => (
           <View key={post._id} style={styles.post}>
             <Text style={styles.postText}>{post.text}</Text>
-            {post.imageUrl && <Image source={{ uri: `http://192.168.0.104:5000${post.imageUrl}` }} style={styles.postImage} />}
+            {post.imageUrl && <Image source={{ uri: `http://10.10.201.145:5000${post.imageUrl}` }} style={styles.postImage} />}
             <View style={styles.actions}>
               <TouchableOpacity style={styles.editButton} onPress={() => handleEditPost(post)}>
                 <Text style={styles.actionText}>Edit</Text>
