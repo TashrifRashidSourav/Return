@@ -72,6 +72,7 @@ import chatRoutes from './routes/chatRoutes';
 import userRoutes from './routes/userRoutes';
 import scheduleRoutes from './routes/scheduleRoutes'; // Import the new scheduleRoutes
 import quoteRoutes from './routes/quoteRoutes';
+import scheduleRoutesAI from './routes/scheduleRoutesAI';
 // Use routes
 app.use('/register', registrationRoutes);
 app.use('/login', authenticationRoutes);
@@ -82,6 +83,8 @@ app.use('/chats', chatRoutes);
 app.use('/users', userRoutes);
 app.use('/routines', scheduleRoutes); // Add schedule routes
 app.use('/api/quotes', quoteRoutes);
+
+app.use('/api/schedule', scheduleRoutesAI);
 
 // Start server
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000; // Convert PORT to a number

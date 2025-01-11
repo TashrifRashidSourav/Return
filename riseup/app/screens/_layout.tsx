@@ -86,17 +86,6 @@ export default function TabLayout() {
         }}
       />
 
-<Tabs.Screen
-        name="quotes"
-        options={{
-          title: 'Routine',
-          headerShown: false, // No header for Routine
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'calendar' : 'calendar-outline'} color={color} />
-          ), // Using calendar icons for Routine
-        }}
-      />
-
       {/* Message Screen - Hidden from Tab Bar */}
       <Tabs.Screen
         name="ChatMessagesScreen"
@@ -106,8 +95,6 @@ export default function TabLayout() {
           tabBarButton: () => null, // Hide from the Tab Bar
         }}
       />
-
-
     </Tabs>
   );
 }
