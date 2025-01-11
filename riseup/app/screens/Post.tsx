@@ -12,6 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 interface Post {
   _id: string;
@@ -25,8 +26,15 @@ interface Post {
   createdAt: string;
 }
 
+interface Quote {
+  _id: string;
+  text: string;
+  author: string;
+}
+
 const PostScreen = () => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [motivation, setMotivation] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -35,6 +43,8 @@ const PostScreen = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLiking, setIsLiking] = useState<string | null>(null);
+
+  const navigation = useNavigation();
 
   const getToken = async () => {
     const token = await AsyncStorage.getItem('authToken');
@@ -61,13 +71,37 @@ const PostScreen = () => {
     }
   };
 
+  const fetchMotivation = async () => {
+    const token = await getToken();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`http://192.168.0.101:5000/api/quotes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+
+      setMotivation(data[0]);
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Error', 'Failed to fetch motivation.');
+      }
+    }
+  };
+
   const fetchPosts = async (page: number) => {
     const token = await getToken();
     if (!token) return;
 
     setLoading(true);
     try {
-      const response = await fetch(`http://10.10.201.145:5000/api/posts?page=${page}&limit=10`, {
+      const response = await fetch(`http://192.168.0.101:5000/api/posts?page=${page}&limit=10`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -119,7 +153,7 @@ const PostScreen = () => {
     setPosts(updatedPosts);
 
     try {
-      const response = await fetch(`http://10.10.201.145:5000/api/posts/like/${postId}`, {
+      const response = await fetch(`http://192.168.0.101:5000/api/posts/like/${postId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -152,7 +186,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://10.10.201.145:5000/api/posts/delete/${postId}`, {
+      const response = await fetch(`http://192.168.0.101:5000/api/posts/delete/${postId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -182,7 +216,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://10.10.201.145:5000/api/posts/update/${editingPost._id}`, {
+      const response = await fetch(`http://192.168.0.101:5000/api/posts/update/${editingPost._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -221,6 +255,7 @@ const PostScreen = () => {
 
   useEffect(() => {
     fetchCurrentUser();
+    fetchMotivation();
     fetchPosts(1);
   }, []);
 
@@ -233,7 +268,7 @@ const PostScreen = () => {
       <Text style={styles.postText}>{item.text}</Text>
       {item.imageUrl && (
         <Image
-          source={{ uri: `http://10.10.201.145:5000${item.imageUrl}` }}
+          source={{ uri: `http://192.168.0.101:5000${item.imageUrl}` }}
           style={styles.postImage}
         />
       )}
@@ -248,7 +283,6 @@ const PostScreen = () => {
           </Text>
         </TouchableOpacity>
         <Text style={styles.likeCount}>{item.likes.length} Likes</Text>
-
         {item.userId._id === currentUserId && (
           <>
             <TouchableOpacity
@@ -275,42 +309,49 @@ const PostScreen = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>RiseUP</Text>
+      </View>
+      {motivation && (
+        <View style={styles.motivationSection}>
+          <Text style={styles.motivationText}>{motivation.text}</Text>
+          <Text style={styles.motivationAuthor}>- {motivation.author}</Text>
+        </View>
+      )}
       {loading && <ActivityIndicator size="large" />}
       {!loading && (
-        <>
-          <FlatList
-            data={posts}
-            renderItem={renderPost}
-            keyExtractor={(item) => item._id}
-            onEndReached={loadMorePosts}
-            onEndReachedThreshold={0.5}
-          />
-          <Modal visible={isEditing} animationType="slide" transparent={false}>
-            <View style={styles.modalContainer}>
-              <TextInput
-                style={styles.input}
-                value={newText}
-                onChangeText={setNewText}
-                multiline
-                placeholder="Edit your post"
-              />
-              <TouchableOpacity style={styles.saveButton} onPress={editPost}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => {
-                  setIsEditing(false);
-                  setEditingPost(null);
-                  setNewText('');
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </Modal>
-        </>
+        <FlatList
+          data={posts}
+          renderItem={renderPost}
+          keyExtractor={(item) => item._id}
+          onEndReached={loadMorePosts}
+          onEndReachedThreshold={0.5}
+        />
       )}
+      <Modal visible={isEditing} animationType="slide" transparent={false}>
+        <View style={styles.modalContainer}>
+          <TextInput
+            style={styles.input}
+            value={newText}
+            onChangeText={setNewText}
+            multiline
+            placeholder="Edit your post"
+          />
+          <TouchableOpacity style={styles.saveButton} onPress={editPost}>
+            <Text style={styles.saveButtonText}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => {
+              setIsEditing(false);
+              setEditingPost(null);
+              setNewText('');
+            }}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -318,8 +359,34 @@ const PostScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 10,
-    paddingHorizontal: 15,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 10,
+    backgroundColor: '#4CAF50',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  motivationSection: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+  },
+  motivationText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  motivationAuthor: {
+    fontSize: 16,
+    color: '#777',
+    marginTop: 5,
   },
   postContainer: {
     paddingBottom: 10,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
-import io from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 
 interface Message {
   _id: string;
@@ -30,15 +30,61 @@ const ChatMessagesScreen: React.FC = () => {
   const [newMessage, setNewMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [userId, setUserId] = useState<string | null>(null);
-  const [socket, setSocket] = useState<any>(null);
   const [receiverName, setReceiverName] = useState<string>('Unknown User');
+
+  const socketRef = useRef<Socket | null>(null);
+  const flatListRef = useRef<FlatList>(null);
+
+  const API_BASE_URL = 'http://192.168.0.101:5000';
+
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        const token = await AsyncStorage.getItem('authToken');
+        if (!token) throw new Error('No token found');
+
+        const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+        if (!tokenPayload || !tokenPayload.id) throw new Error('Invalid token payload');
+
+        setUserId(tokenPayload.id);
+
+        await fetchChatDetails();
+        await fetchMessages();
+
+        // Initialize socket connection
+        socketRef.current = io(API_BASE_URL, {
+          query: { token },
+        });
+
+        // Listen for new messages
+        socketRef.current.on('message', (message: Message) => {
+          setMessages((prev) => [...prev, message]);
+          // Automatically scroll to the bottom when a new message is received
+          flatListRef.current?.scrollToEnd({ animated: true });
+        });
+
+        return () => {
+          // Clean up socket connection on unmount
+          socketRef.current?.disconnect();
+        };
+      } catch (err: any) {
+        Alert.alert('Error', 'Initialization failed. Please try again.');
+        console.error('Initialization error:', err.message);
+        setError('Initialization failed.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeChat();
+  }, [chatId]);
 
   const fetchChatDetails = async () => {
     try {
       const token = await AsyncStorage.getItem('authToken');
       if (!token) throw new Error('No token found');
 
-      const response = await fetch(`http://10.10.201.127:5000/chats`, {
+      const response = await fetch(`${API_BASE_URL}/chats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -61,7 +107,7 @@ const ChatMessagesScreen: React.FC = () => {
       const token = await AsyncStorage.getItem('authToken');
       if (!token) throw new Error('No token found');
 
-      const response = await fetch(`http://10.10.201.127:5000/chats/${chatId}/messages`, {
+      const response = await fetch(`${API_BASE_URL}/chats/${chatId}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -72,46 +118,8 @@ const ChatMessagesScreen: React.FC = () => {
     } catch (err: any) {
       console.error('Error fetching messages:', err.message);
       setError('Failed to fetch messages.');
-    } finally {
-      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        const token = await AsyncStorage.getItem('authToken');
-        if (!token) throw new Error('No token found');
-
-        const tokenPayload = JSON.parse(atob(token.split('.')[1]));
-        if (!tokenPayload || !tokenPayload.id) {
-          throw new Error('Invalid token payload');
-        }
-        setUserId(tokenPayload.id);
-
-        await fetchChatDetails();
-        await fetchMessages();
-
-        const newSocket = io('http://10.10.201.127:5000', {
-          query: { token },
-        });
-        setSocket(newSocket);
-
-        newSocket.on('message', (message: Message) => {
-          setMessages((prev) => [...prev, message]);
-        });
-
-        return () => {
-          newSocket.disconnect();
-        };
-      } catch (err) {
-        Alert.alert('Error', 'Initialization failed. Please try again.');
-        setError('Initialization failed.');
-      }
-    };
-
-    initialize();
-  }, [chatId]);
 
   const sendMessage = async () => {
     if (!newMessage.trim()) {
@@ -123,7 +131,7 @@ const ChatMessagesScreen: React.FC = () => {
       const token = await AsyncStorage.getItem('authToken');
       if (!token) throw new Error('No token found');
 
-      const response = await fetch(`http://10.10.201.127:5000/chats/${chatId}/messages`, {
+      const response = await fetch(`${API_BASE_URL}/chats/${chatId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,12 +143,15 @@ const ChatMessagesScreen: React.FC = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
+      // Add the new message to the list
       setMessages((prev) => [...prev, data.newMessage]);
       setNewMessage('');
 
-      if (socket) {
-        socket.emit('newMessage', data.newMessage);
-      }
+      // Emit the message through WebSocket
+      socketRef.current?.emit('newMessage', data.newMessage);
+
+      // Automatically scroll to the bottom
+      flatListRef.current?.scrollToEnd({ animated: true });
     } catch (err: any) {
       console.error('Error sending message:', err.message);
       setError('Failed to send message.');
@@ -179,6 +190,7 @@ const ChatMessagesScreen: React.FC = () => {
         <ActivityIndicator size="large" />
       ) : (
         <FlatList
+          ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item._id}
           renderItem={renderMessageItem}
