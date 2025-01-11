@@ -1,25 +1,18 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-// Schema for individual messages
-const messageSchema = new mongoose.Schema(
+interface IChat extends Document {
+  members: mongoose.Types.ObjectId[];
+  lastMessage?: mongoose.Types.ObjectId;
+  updatedAt: Date;
+}
+
+const chatSchema = new Schema<IChat>(
   {
-    chatId: { type: mongoose.Schema.Types.ObjectId, ref: 'Chat', required: true },
-    senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    text: { type: String, required: true },
+    members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
+    lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' }, // Reference to the last message
   },
-  { timestamps: true } // Adds createdAt and updatedAt timestamps
+  { timestamps: true }
 );
 
-// Schema for chats
-const chatSchema = new mongoose.Schema(
-  {
-    members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Array of users in the chat
-  },
-  { timestamps: true } // Adds createdAt and updatedAt timestamps
-);
-
-// Create models
-const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);
-const Chat = mongoose.models.Chat || mongoose.model('Chat', chatSchema);
-
-export { Chat, Message };
+const Chat = mongoose.models.Chat || mongoose.model<IChat>('Chat', chatSchema);
+export { Chat };

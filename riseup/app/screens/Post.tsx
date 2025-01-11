@@ -12,6 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 interface Post {
   _id: string;
@@ -25,8 +26,15 @@ interface Post {
   createdAt: string;
 }
 
+interface Quote {
+  _id: string;
+  text: string;
+  author: string;
+}
+
 const PostScreen = () => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [motivation, setMotivation] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -34,7 +42,9 @@ const PostScreen = () => {
   const [newText, setNewText] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [isLiking, setIsLiking] = useState<string | null>(null);  // Track which post is being liked/unliked
+  const [isLiking, setIsLiking] = useState<string | null>(null);
+
+  const navigation = useNavigation();
 
   const getToken = async () => {
     const token = await AsyncStorage.getItem('authToken');
@@ -52,8 +62,36 @@ const PostScreen = () => {
     try {
       const tokenData = JSON.parse(atob(token.split('.')[1]));
       setCurrentUserId(tokenData.id);
-    } catch (error: any) {
-      Alert.alert('Error', 'Failed to get user information');
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Error', 'Failed to get user information.');
+      }
+    }
+  };
+
+  const fetchMotivation = async () => {
+    const token = await getToken();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`http://192.168.0.101:5000/api/quotes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+
+      setMotivation(data[0]);
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Error', 'Failed to fetch motivation.');
+      }
     }
   };
 
@@ -63,7 +101,7 @@ const PostScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.108:5000/posts?page=${page}&limit=10`, {
+      const response = await fetch(`http://192.168.0.101:5000/api/posts?page=${page}&limit=10`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -75,25 +113,29 @@ const PostScreen = () => {
       setPosts(page === 1 ? data.posts : [...posts, ...data.posts]);
       setCurrentPage(data.currentPage);
       setTotalPages(data.totalPages);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to fetch posts.');
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Error', 'Failed to fetch posts.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const likePost = async (postId: string) => {
-    if (isLiking) return; // Prevent multiple like requests at the same time
+    if (isLiking) return;
 
-    setIsLiking(postId); // Disable further interactions with this post
+    setIsLiking(postId);
 
     const token = await getToken();
     if (!token) {
-      setIsLiking(null); // Re-enable interaction if no token
+      setIsLiking(null);
       return;
     }
 
-    const postIndex = posts.findIndex(post => post._id === postId);
+    const postIndex = posts.findIndex((post) => post._id === postId);
     const post = posts[postIndex];
 
     if (!post) {
@@ -103,16 +145,15 @@ const PostScreen = () => {
 
     const isLiked = post.likes.includes(currentUserId || '');
     const updatedLikes = isLiked
-      ? post.likes.filter(id => id !== currentUserId)
+      ? post.likes.filter((id) => id !== currentUserId)
       : [...post.likes, currentUserId || ''];
 
-    // Optimistic Update
     const updatedPosts = [...posts];
     updatedPosts[postIndex] = { ...post, likes: updatedLikes };
     setPosts(updatedPosts);
 
     try {
-      const response = await fetch(`http://192.168.0.103:5000/posts/like/${postId}`, {
+      const response = await fetch(`http://192.168.0.101:5000/api/posts/like/${postId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -122,19 +163,21 @@ const PostScreen = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
-      // Sync with the server's response
       const syncedPosts = [...posts];
       syncedPosts[postIndex] = { ...post, likes: data.likes };
       setPosts(syncedPosts);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to like/unlike post.');
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Error', 'Failed to like/unlike post.');
+      }
 
-      // Revert the optimistic update if the server request fails
       const revertedPosts = [...posts];
       revertedPosts[postIndex] = post;
       setPosts(revertedPosts);
     } finally {
-      setIsLiking(null); // Re-enable interaction
+      setIsLiking(null);
     }
   };
 
@@ -143,7 +186,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.103:5000/posts/delete/${postId}`, {
+      const response = await fetch(`http://192.168.0.101:5000/api/posts/delete/${postId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -155,10 +198,14 @@ const PostScreen = () => {
         throw new Error(data.message);
       }
 
-      setPosts(prevPosts => prevPosts.filter(post => post._id !== postId));
+      setPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
       Alert.alert('Success', 'Post deleted successfully.');
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to delete post.');
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Error', 'Failed to delete post.');
+      }
     }
   };
 
@@ -169,7 +216,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.108:5000/posts/update/${editingPost._id}`, {
+      const response = await fetch(`http://192.168.0.101:5000/api/posts/update/${editingPost._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -181,8 +228,8 @@ const PostScreen = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
           post._id === editingPost._id ? { ...post, text: newText } : post
         )
       );
@@ -191,8 +238,12 @@ const PostScreen = () => {
       setEditingPost(null);
       setNewText('');
       Alert.alert('Success', 'Post updated successfully.');
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to edit post.');
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Error', 'Failed to edit post.');
+      }
     }
   };
 
@@ -204,6 +255,7 @@ const PostScreen = () => {
 
   useEffect(() => {
     fetchCurrentUser();
+    fetchMotivation();
     fetchPosts(1);
   }, []);
 
@@ -211,25 +263,26 @@ const PostScreen = () => {
     <View style={styles.postContainer}>
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{item.userId.name || 'Anonymous'}</Text>
-        <Text style={styles.postDate}>
-          {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
+        <Text style={styles.postDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
       </View>
       <Text style={styles.postText}>{item.text}</Text>
       {item.imageUrl && (
-        <Image source={{ uri: `http://192.168.0.103:5000${item.imageUrl}` }} style={styles.postImage} />
+        <Image
+          source={{ uri: `http://192.168.0.101:5000${item.imageUrl}` }}
+          style={styles.postImage}
+        />
       )}
       <View style={styles.actionContainer}>
         <TouchableOpacity
           style={styles.likeButton}
           onPress={() => likePost(item._id)}
-          disabled={isLiking === item._id}>
+          disabled={isLiking === item._id}
+        >
           <Text style={styles.likeText}>
             {item.likes.includes(currentUserId || '') ? 'Unlike' : 'Like'}
           </Text>
         </TouchableOpacity>
         <Text style={styles.likeCount}>{item.likes.length} Likes</Text>
-
         {item.userId._id === currentUserId && (
           <>
             <TouchableOpacity
@@ -238,12 +291,14 @@ const PostScreen = () => {
                 setEditingPost(item);
                 setNewText(item.text || '');
                 setIsEditing(true);
-              }}>
+              }}
+            >
               <Text>Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.deleteButton}
-              onPress={() => deletePost(item._id)}>
+              onPress={() => deletePost(item._id)}
+            >
               <Text>Delete</Text>
             </TouchableOpacity>
           </>
@@ -254,43 +309,49 @@ const PostScreen = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>RiseUP</Text>
+      </View>
+      {motivation && (
+        <View style={styles.motivationSection}>
+          <Text style={styles.motivationText}>{motivation.text}</Text>
+          <Text style={styles.motivationAuthor}>- {motivation.author}</Text>
+        </View>
+      )}
       {loading && <ActivityIndicator size="large" />}
       {!loading && (
-        <>
-          <FlatList
-            data={posts}
-            renderItem={renderPost}
-            keyExtractor={item => item._id}
-            onEndReached={loadMorePosts}
-            onEndReachedThreshold={0.5}
-          />
-          <Modal visible={isEditing} animationType="slide" transparent={false}>
-            <View style={styles.modalContainer}>
-              <TextInput
-                style={styles.input}
-                value={newText}
-                onChangeText={setNewText}
-                multiline
-                placeholder="Edit your post"
-              />
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={editPost}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => {
-                  setIsEditing(false);
-                  setEditingPost(null);
-                  setNewText('');
-                }}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </Modal>
-        </>
+        <FlatList
+          data={posts}
+          renderItem={renderPost}
+          keyExtractor={(item) => item._id}
+          onEndReached={loadMorePosts}
+          onEndReachedThreshold={0.5}
+        />
       )}
+      <Modal visible={isEditing} animationType="slide" transparent={false}>
+        <View style={styles.modalContainer}>
+          <TextInput
+            style={styles.input}
+            value={newText}
+            onChangeText={setNewText}
+            multiline
+            placeholder="Edit your post"
+          />
+          <TouchableOpacity style={styles.saveButton} onPress={editPost}>
+            <Text style={styles.saveButtonText}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => {
+              setIsEditing(false);
+              setEditingPost(null);
+              setNewText('');
+            }}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -298,8 +359,34 @@ const PostScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 10,
-    paddingHorizontal: 15,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 10,
+    backgroundColor: '#4CAF50',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  motivationSection: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+  },
+  motivationText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  motivationAuthor: {
+    fontSize: 16,
+    color: '#777',
+    marginTop: 5,
   },
   postContainer: {
     paddingBottom: 10,

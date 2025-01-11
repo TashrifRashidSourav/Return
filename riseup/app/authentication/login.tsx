@@ -30,7 +30,7 @@ const LoginScreen = () => {
         console.log('Detected IP Address:', ipAddress);
 
         if (ipAddress) {
-          const apiBase = `http://192.168.0.108:5000`;  // Use dynamic IP
+          const apiBase = `http://192.168.0.101:5000`;  // Use dynamic IP
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -64,7 +64,7 @@ const LoginScreen = () => {
       if (response.ok) {
         await AsyncStorage.setItem('authToken', result.token);  // Store the JWT token
         Alert.alert('Success', 'Login successful!');
-        router.push('../screens/profile'); // Redirect to profile or desired page
+        router.push('../screens/Post'); // Redirect to profile or desired page
       } else {
         Alert.alert('Error', result.message || 'Invalid credentials.');
       }
