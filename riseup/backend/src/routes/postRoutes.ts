@@ -28,7 +28,9 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    const filename = `${Date.now()}-${file.originalname}`;
+    console.log('Generated filename:', filename);
+    cb(null, filename);
   },
 });
 
@@ -54,11 +56,19 @@ router.use('/uploads', express.static('uploads'));
 router.post(
   '/create',
   authenticate,
-  upload.single('image'),
+  upload.single('image'), // Ensure the field name matches
   async (req: Request, res: Response) => {
     try {
+      console.log('File received:', req.file); // Debug log
+      console.log('Request body:', req.body); // Debug log
+
       const { text } = req.body;
       const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+      console.log('Generated imageUrl:', imageUrl); // Debug log
+
+      if (!text && !req.file) {
+        return res.status(400).json({ message: 'Text or image is required to create a post.' });
+      }
 
       const post = new Post({
         userId: (req as any).user.id,
@@ -68,10 +78,42 @@ router.post(
       });
 
       await post.save();
+      console.log('Post saved to database:', post); // Debug log
       res.status(201).json(post);
     } catch (error) {
       console.error('Error creating post:', error);
       res.status(500).json({ message: 'Failed to create post' });
+    }
+  }
+);
+
+
+// Route: Update a post
+router.put(
+  '/update/:id',
+  authenticate,
+  upload.single('image'),
+  async (req: Request, res: Response) => {
+    try {
+      console.log('File received for update:', req.file); // Debug: Log received file
+      const { id } = req.params;
+      const { text } = req.body;
+      const userId = (req as any).user.id;
+
+      // Find the post
+      const post = await Post.findOne({ _id: id, userId });
+      if (!post) return res.status(404).json({ message: 'Post not found or unauthorized' });
+
+      // Update text and image if provided
+      if (text) post.text = text;
+      if (req.file) post.imageUrl = `/uploads/${req.file.filename}`;
+
+      await post.save();
+      console.log('Post updated in database:', post);
+      res.status(200).json(post);
+    } catch (error) {
+      console.error('Error updating post:', error);
+      res.status(500).json({ message: 'Failed to update post' });
     }
   }
 );
@@ -143,27 +185,6 @@ router.put('/like/:id', authenticate, async (req: Request, res: Response) => {
   }
 });
 
-// Route: Update a post
-router.put('/update/:id', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { text } = req.body;
-    const userId = (req as any).user.id;
-
-    const post = await Post.findOneAndUpdate(
-      { _id: id, userId },
-      { text },
-      { new: true }
-    );
-
-    if (!post) return res.status(404).json({ message: 'Post not found or unauthorized' });
-    res.status(200).json(post);
-  } catch (error) {
-    console.error('Error updating post:', error);
-    res.status(500).json({ message: 'Failed to update post' });
-  }
-});
-
 // Route: Delete a post
 router.delete('/delete/:id', authenticate, async (req: Request, res: Response) => {
   try {
@@ -174,7 +195,6 @@ router.delete('/delete/:id', authenticate, async (req: Request, res: Response) =
     if (!post) return res.status(404).json({ message: 'Post not found or unauthorized' });
 
     res.status(200).json({ message: 'Post deleted successfully' });
-    
   } catch (error) {
     console.error('Error deleting post:', error);
     res.status(500).json({ message: 'Failed to delete post' });

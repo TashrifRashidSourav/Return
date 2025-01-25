@@ -42,7 +42,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile', // Title for the Profile screen
-          headerShown: true, // Show header for Profile screen
+          headerShown: false, // Show header for Profile screen
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
           ),
@@ -86,6 +86,17 @@ export default function TabLayout() {
         }}
       />
 
+<Tabs.Screen
+        name="scheduleai"
+        options={{
+          title: 'Schedule',
+          headerShown: false, // No header for Routine
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'calendar' : 'calendar-outline'} color={color} />
+          ), // Using calendar icons for Routine
+        }}
+      />
+
       {/* Message Screen - Hidden from Tab Bar */}
       <Tabs.Screen
         name="ChatMessagesScreen"
@@ -95,6 +106,8 @@ export default function TabLayout() {
           tabBarButton: () => null, // Hide from the Tab Bar
         }}
       />
+
+
     </Tabs>
   );
 }

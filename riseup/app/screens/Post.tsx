@@ -63,11 +63,7 @@ const PostScreen = () => {
       const tokenData = JSON.parse(atob(token.split('.')[1]));
       setCurrentUserId(tokenData.id);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', error.message);
-      } else {
-        Alert.alert('Error', 'Failed to get user information.');
-      }
+      Alert.alert('Error', 'Failed to get user information.');
     }
   };
 
@@ -76,7 +72,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.101:5000/api/quotes`, {
+      const response = await fetch(`http://192.168.0.106:5000/api/quotes`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -87,11 +83,7 @@ const PostScreen = () => {
 
       setMotivation(data[0]);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', error.message);
-      } else {
-        Alert.alert('Error', 'Failed to fetch motivation.');
-      }
+      Alert.alert('Error', 'Failed to fetch motivation.');
     }
   };
 
@@ -101,7 +93,7 @@ const PostScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.101:5000/api/posts?page=${page}&limit=10`, {
+      const response = await fetch(`http://192.168.0.106:5000/api/posts?page=${page}&limit=10`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -114,11 +106,7 @@ const PostScreen = () => {
       setCurrentPage(data.currentPage);
       setTotalPages(data.totalPages);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', error.message);
-      } else {
-        Alert.alert('Error', 'Failed to fetch posts.');
-      }
+      Alert.alert('Error', 'Failed to fetch posts.');
     } finally {
       setLoading(false);
     }
@@ -153,7 +141,7 @@ const PostScreen = () => {
     setPosts(updatedPosts);
 
     try {
-      const response = await fetch(`http://192.168.0.101:5000/api/posts/like/${postId}`, {
+      const response = await fetch(`http://192.168.0.106:5000/api/posts/like/${postId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -167,11 +155,7 @@ const PostScreen = () => {
       syncedPosts[postIndex] = { ...post, likes: data.likes };
       setPosts(syncedPosts);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', error.message);
-      } else {
-        Alert.alert('Error', 'Failed to like/unlike post.');
-      }
+      Alert.alert('Error', 'Failed to like/unlike post.');
 
       const revertedPosts = [...posts];
       revertedPosts[postIndex] = post;
@@ -186,7 +170,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.101:5000/api/posts/delete/${postId}`, {
+      const response = await fetch(`http://192.168.0.106:5000/api/posts/delete/${postId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -201,11 +185,7 @@ const PostScreen = () => {
       setPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
       Alert.alert('Success', 'Post deleted successfully.');
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', error.message);
-      } else {
-        Alert.alert('Error', 'Failed to delete post.');
-      }
+      Alert.alert('Error', 'Failed to delete post.');
     }
   };
 
@@ -216,7 +196,7 @@ const PostScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.101:5000/api/posts/update/${editingPost._id}`, {
+      const response = await fetch(`http://192.168.0.106:5000/api/posts/update/${editingPost._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -239,11 +219,7 @@ const PostScreen = () => {
       setNewText('');
       Alert.alert('Success', 'Post updated successfully.');
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', error.message);
-      } else {
-        Alert.alert('Error', 'Failed to edit post.');
-      }
+      Alert.alert('Error', 'Failed to edit post.');
     }
   };
 
@@ -262,13 +238,21 @@ const PostScreen = () => {
   const renderPost = ({ item }: { item: Post }) => (
     <View style={styles.postContainer}>
       <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.userId.name || 'Anonymous'}</Text>
-        <Text style={styles.postDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+        <View style={styles.avatarContainer}>
+          <Image
+            style={styles.avatar}
+            source={{ uri: 'https://via.placeholder.com/50' }}
+          />
+        </View>
+        <View style={styles.userNameSection}>
+          <Text style={styles.userName}>{item.userId.name || 'Anonymous'}</Text>
+          <Text style={styles.postDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+        </View>
       </View>
       <Text style={styles.postText}>{item.text}</Text>
       {item.imageUrl && (
         <Image
-          source={{ uri: `http://192.168.0.101:5000${item.imageUrl}` }}
+          source={{ uri: `http://192.168.0.106:5000${item.imageUrl}` }}
           style={styles.postImage}
         />
       )}
@@ -293,13 +277,13 @@ const PostScreen = () => {
                 setIsEditing(true);
               }}
             >
-              <Text>Edit</Text>
+              <Text style={styles.actionText}>Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() => deletePost(item._id)}
             >
-              <Text>Delete</Text>
+              <Text style={styles.actionText}>Delete</Text>
             </TouchableOpacity>
           </>
         )}
@@ -318,7 +302,7 @@ const PostScreen = () => {
           <Text style={styles.motivationAuthor}>- {motivation.author}</Text>
         </View>
       )}
-      {loading && <ActivityIndicator size="large" />}
+      {loading && <ActivityIndicator size="large" color="#4CAF50" />}
       {!loading && (
         <FlatList
           data={posts}
@@ -355,22 +339,19 @@ const PostScreen = () => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#f5f5f5',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 10,
+    padding: 15,
     backgroundColor: '#4CAF50',
+    alignItems: 'center',
   },
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
   },
   motivationSection: {
@@ -382,6 +363,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    textAlign: 'center',
   },
   motivationAuthor: {
     fontSize: 16,
@@ -389,92 +371,127 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   postContainer: {
-    paddingBottom: 10,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 15,
+    margin: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   userInfo: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  avatarContainer: {
+    marginRight: 10,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ccc',
+  },
+  userNameSection: {
+    flex: 1,
   },
   userName: {
+    fontSize: 16,
     fontWeight: 'bold',
+    color: '#4CAF50',
   },
   postDate: {
-    color: '#777',
+    fontSize: 12,
+    color: '#999',
   },
   postText: {
     fontSize: 16,
+    color: '#333',
     marginVertical: 10,
   },
   postImage: {
     width: '100%',
     height: 200,
+    borderRadius: 10,
     marginVertical: 10,
   },
   actionContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
   },
   likeButton: {
+    backgroundColor: '#4CAF50',
     paddingVertical: 5,
     paddingHorizontal: 10,
-    backgroundColor: '#007BFF',
     borderRadius: 5,
   },
   likeText: {
-    color: '#fff',
+    color: '#FFFFFF',
+    fontSize: 14,
   },
   likeCount: {
-    marginLeft: 10,
-    alignSelf: 'center',
-    color: '#555',
+    fontSize: 14,
+    color: '#777',
   },
   editButton: {
+    backgroundColor: '#FF9800',
     paddingVertical: 5,
     paddingHorizontal: 10,
-    backgroundColor: '#FFC107',
     borderRadius: 5,
-    marginHorizontal: 5,
   },
   deleteButton: {
+    backgroundColor: '#F44336',
     paddingVertical: 5,
     paddingHorizontal: 10,
-    backgroundColor: '#DC3545',
     borderRadius: 5,
+  },
+  actionText: {
+    color: '#FFFFFF',
+    fontSize: 14,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
+    backgroundColor: '#FFFFFF',
   },
   input: {
-    width: '100%',
+    height: 100,
+    borderColor: '#CCCCCC',
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 5,
     padding: 10,
-    marginBottom: 10,
+    marginBottom: 20,
+    textAlignVertical: 'top',
   },
   saveButton: {
-    padding: 10,
-    backgroundColor: '#28A745',
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    alignItems: 'center',
     borderRadius: 5,
+    marginBottom: 10,
   },
   saveButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   cancelButton: {
-    padding: 10,
-    backgroundColor: '#DC3545',
+    backgroundColor: '#F44336',
+    padding: 15,
+    alignItems: 'center',
     borderRadius: 5,
-    marginTop: 10,
   },
   cancelButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
-export default PostScreen;
+  export default PostScreen;
