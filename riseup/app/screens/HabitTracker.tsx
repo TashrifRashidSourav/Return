@@ -50,7 +50,7 @@ const HabitTracker = () => {
 
       console.log('Saving payload:', payload); // Debug payload
       const response = await axios.post(
-        'http://192.168.0.101:5000/habitTracker/create',
+        'http://10.10.200.209:5000/habitTracker/create',
         payload,
         {
           headers: {
@@ -74,7 +74,7 @@ const HabitTracker = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get(
-        `http://192.168.0.101:5000/habitTracker/user/${userId}`,
+        `http://10.10.200.209:5000/habitTracker/user/${userId}`,
         {
           headers: {
             'Content-Type': 'application/json',

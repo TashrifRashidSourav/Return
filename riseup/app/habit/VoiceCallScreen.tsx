@@ -8,8 +8,8 @@ interface User {
   email: string;
 }
 
-const SERVER_URL = 'http://192.168.0.105:5000';
-const SOCKET_URL = 'http://192.168.0.105:5000';
+const SERVER_URL = 'http://10.10.200.209:5000';
+const SOCKET_URL = 'http://10.10.200.209:5000';
 
 const VoiceCall: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);

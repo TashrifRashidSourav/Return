@@ -32,7 +32,7 @@ const LoginScreen = () => {
         console.log('Detected IP Address:', ipAddress);
 
         if (ipAddress) {
-          const apiBase = `http://192.168.0.101:5000`; // Use dynamic IP
+          const apiBase = `http://10.10.200.209:5000`; // Use dynamic IP
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -105,7 +105,7 @@ const LoginScreen = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.title}>Sign in to your account</Text>
+            <Text style={styles.title}>RiseUp</Text>
 
             {/* Email Input */}
             <View style={styles.inputWrapper}>

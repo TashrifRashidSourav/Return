@@ -18,7 +18,7 @@ interface Quote {
   author: string;
 }
 
-const API_URL = 'http://192.168.0.110:5000/api/quotes'; // Adjust to your backend URL
+const API_URL = 'http://10.10.200.209:5000/api/quotes'; // Adjust to your backend URL
 
 const App: React.FC = () => {
   const [quotes, setQuotes] = useState<Quote[]>([]);

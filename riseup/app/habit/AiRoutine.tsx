@@ -8,7 +8,7 @@ type Task = {
   priority: number;
 };
 
-const API_URL = 'http://10.15.56.133:5000/airesponse';
+const API_URL = 'http://10.10.200.209:5000/airesponse';
 
 const AiResponseApp = () => {
   const [schedule, setSchedule] = useState<Task[]>([]);

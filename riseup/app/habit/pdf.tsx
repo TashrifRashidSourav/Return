@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert, Linking } from "react-native";
 
 const Pdf = () => {
-  const serverBaseUrl = "http://192.168.0.101:5921"; // Change to your actual server URL
+  const serverBaseUrl = "http://10.10.200.209:5921"; // Change to your actual server URL
 
   const [books] = useState([
     {

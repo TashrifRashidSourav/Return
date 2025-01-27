@@ -27,7 +27,7 @@ const Schedule24Hours: React.FC = () => {
   const [priority, setPriority] = useState<number>(1);
   const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
-  const API_BASE_URL = 'http://10.15.56.133:5000/api/schedule'; // Replace with your backend URL
+  const API_BASE_URL = 'http://10.10.200.209:5000/api/schedule'; // Replace with your backend URL
 
   useEffect(() => {
     fetchSchedule();

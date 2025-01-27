@@ -13,7 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 
-const SERVER_URL = 'http://10.15.56.133:5000';
+const SERVER_URL = 'http://10.10.200.209:5000';
 
 const PostCreateScreen = () => {
   const [text, setText] = useState('');

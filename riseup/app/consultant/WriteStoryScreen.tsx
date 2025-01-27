@@ -28,7 +28,7 @@ const WriteStoryScreen: React.FC = () => {
     }
 
     try {
-      const response = await axios.post('http://192.168.0.110:5000/api/stories/create', {
+      const response = await axios.post('http://10.10.200.209:5000/api/stories/create', {
         title,
         authorId,
         content,

@@ -38,7 +38,7 @@ const ChatMessagesScreen: React.FC = () => {
       const token = await AsyncStorage.getItem('authToken');
       if (!token) throw new Error('No token found');
 
-      const response = await fetch(`http://192.168.0.101:5000/chats`, {
+      const response = await fetch(`http://10.10.200.209:5000/chats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -61,7 +61,7 @@ const ChatMessagesScreen: React.FC = () => {
       const token = await AsyncStorage.getItem('authToken');
       if (!token) throw new Error('No token found');
 
-      const response = await fetch(`http://192.168.0.101:5000/chats/${chatId}/messages`, {
+      const response = await fetch(`http://10.10.200.209:5000/chats/${chatId}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -78,7 +78,7 @@ const ChatMessagesScreen: React.FC = () => {
   };
 
   const initializeSocket = (token: string) => {
-    const newSocket = io('http://192.168.0.101:5000', {
+    const newSocket = io('http://10.10.200.209:5000', {
       query: { token },
     });
     setSocket(newSocket);
@@ -133,7 +133,7 @@ const ChatMessagesScreen: React.FC = () => {
       const token = await AsyncStorage.getItem('authToken');
       if (!token) throw new Error('No token found');
 
-      const response = await fetch(`http://192.168.0.101:5000/chats/${chatId}/messages`, {
+      const response = await fetch(`http://10.10.200.209:5000/chats/${chatId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

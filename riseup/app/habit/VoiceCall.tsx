@@ -3,7 +3,7 @@ import { View, Text, Button, Alert, StyleSheet, FlatList, ActivityIndicator } fr
 import AsyncStorage from '@react-native-async-storage/async-storage'; // For storing user token or session
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = 'http://10.15.56.133:5000'; // Replace with your backend URL
+const SOCKET_URL = 'http://10.10.200.209:5000'; // Replace with your backend URL
 const socket = io(SOCKET_URL);
 
 const VoiceCall = () => {

@@ -29,7 +29,7 @@ const App = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post('http://10.15.56.133:5000/airesponse', { input }); // Adjust backend IP
+      const res = await axios.post('http://10.10.200.209:5000/airesponse', { input }); // Adjust backend IP
       const aiMessage = { sender: 'ai', text: res.data.output };
       setMessages((prevMessages) => [...prevMessages, aiMessage]); // Add AI response to the chat
     } catch (error) {

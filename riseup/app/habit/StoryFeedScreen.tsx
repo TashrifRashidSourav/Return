@@ -23,7 +23,7 @@ const StoryFeedScreen: React.FC = () => {
   useEffect(() => {
     const fetchStories = async () => {
       try {
-        const response = await axios.get('http://10.15.56.133:5000/api/stories');
+        const response = await axios.get('http://10.10.200.209:5000/api/stories');
         setStories(response.data);
       } catch (err) {
         console.error('Failed to fetch stories:', err);
