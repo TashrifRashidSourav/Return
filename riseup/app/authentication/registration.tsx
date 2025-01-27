@@ -30,7 +30,7 @@ const RegistrationScreen = () => {
         console.log('Detected IP Address:', ipAddress);
 
         if (ipAddress) {
-          const apiBase = `http://10.10.201.145:5000/register`; // Replace with dynamic assignment if required
+          const apiBase = `http://10.10.200.209:5000/register`; // Replace with dynamic assignment if required
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -97,7 +97,8 @@ const RegistrationScreen = () => {
             <View style={styles.inputWrapper}>
               <MaterialIcons name="person" size={20} color="#6c757d" />
               <TextInput
-                style={styles.input}
+                style={styles.input}   
+                
                 placeholder="Name"
                 placeholderTextColor="#6c757d"
                 value={name}

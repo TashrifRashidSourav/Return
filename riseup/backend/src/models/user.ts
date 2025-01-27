@@ -5,6 +5,7 @@ interface IUser extends Document {
   email: string;
   password: string;
   online: boolean;
+  profilePicture?: string; // URL or file path for the profile picture
   chats: mongoose.Types.ObjectId[]; // Array of chat IDs the user is a part of
   preferences?: {
     learningPriority: string; // Example: 'React', 'Python', 'Data Science'
@@ -21,8 +22,9 @@ const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  online: { type: Boolean, default: false }, // Track if the user is online
-  chats: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }], // References to chats
+  online: { type: Boolean, default: false },
+  profilePicture: { type: String, default: '' }, // Add profile picture field
+  chats: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }],
   preferences: {
     learningPriority: { type: String, default: '' },
     productivityTips: { type: Boolean, default: true },

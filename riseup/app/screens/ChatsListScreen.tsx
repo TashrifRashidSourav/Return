@@ -65,7 +65,7 @@ const ChatsListScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.101:5000/chats`, {
+      const response = await fetch(`http://10.10.200.209:5000/chats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -91,7 +91,7 @@ const ChatsListScreen = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://192.168.0.101:5000/users/search?name=${encodeURIComponent(searchText.trim())}`,
+        `http://10.10.200.209:5000/users/search?name=${encodeURIComponent(searchText.trim())}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -110,7 +110,7 @@ const ChatsListScreen = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://192.168.0.101:5000/chats/start`, {
+      const response = await fetch(`http://10.10.200.209:5000/chats/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +122,7 @@ const ChatsListScreen = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
-      router.push({ pathname: './ChatMessagesScreen', params: { chatId: data.chat._id, receiverName: data.chat.receiverName } });
+      router.push({ pathname: '.././habit/ChatMessagesScreen', params: { chatId: data.chat._id, receiverName: data.chat.receiverName } });
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to start a chat.');
     }

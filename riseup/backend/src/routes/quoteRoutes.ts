@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import Quote from '../models/Quote';
 
 const router = express.Router();
@@ -29,7 +30,7 @@ router.post('/add', authenticate, async (req: Request, res: Response) => {
 
     const quote = new Quote({
       text,
-      author,
+      author: author || 'Anonymous',
     });
 
     await quote.save();
@@ -57,10 +58,15 @@ router.put('/update/:id', authenticate, async (req: Request, res: Response) => {
     const { id } = req.params;
     const { text, author } = req.body;
 
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid quote ID' });
+    }
+
     const quote = await Quote.findByIdAndUpdate(
       id,
       { text, author },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!quote) return res.status(404).json({ message: 'Quote not found' });
@@ -76,6 +82,11 @@ router.put('/update/:id', authenticate, async (req: Request, res: Response) => {
 router.delete('/delete/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid quote ID' });
+    }
 
     const quote = await Quote.findByIdAndDelete(id);
 
