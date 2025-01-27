@@ -97,7 +97,8 @@ const RegistrationScreen = () => {
             <View style={styles.inputWrapper}>
               <MaterialIcons name="person" size={20} color="#6c757d" />
               <TextInput
-                style={styles.input}
+                style={styles.input}   
+                
                 placeholder="Name"
                 placeholderTextColor="#6c757d"
                 value={name}
