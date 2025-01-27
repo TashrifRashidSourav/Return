@@ -26,7 +26,7 @@ app.use(cors(corsOptions));
 
 // Serve static files for uploads
 const uploadsDir = path.join(__dirname, '../src/uploads');
-app.use('/uploads', express.static(uploadsDir)); // Static route for uploaded files
+app.use('/uploads', express.static(uploadsDir));
 
 // MongoDB connection
 const MONGO_URI = process.env.MONGO_URI || '';
@@ -43,26 +43,59 @@ const io = new Server(httpServer, {
   },
 });
 
-// Socket.IO logic for real-time updates
+// Socket.IO logic for real-time call handling
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  // Join room for a specific chat
-  socket.on('joinRoom', ({ chatId }) => {
-    socket.join(chatId);
-    console.log(`User joined room: ${chatId}`);
-  });
-
-  // Send a message in a chat
-  socket.on('sendMessage', ({ chatId, senderId, text }) => {
-    if (!chatId || !senderId || !text) {
-      console.error('Invalid message data');
+  // Join a user to their room
+  socket.on('joinRoom', (userId) => {
+    if (!userId) {
+      console.error('User ID not provided for joinRoom');
       return;
     }
+    socket.join(userId);
+    console.log(`User ${userId} joined their room`);
+  });
 
-    const message = { chatId, senderId, text, createdAt: new Date() };
-    io.to(chatId).emit('messageReceived', message); // Emit the 'messageReceived' event to the room
-    console.log('Message sent:', message);
+  // Initiate a call
+  socket.on('callUser', ({ callerId, receiverId }) => {
+    if (!callerId || !receiverId) {
+      console.error('CallerId or ReceiverId is missing');
+      return;
+    }
+    console.log(`Call initiated from ${callerId} to ${receiverId}`);
+    io.to(receiverId).emit('incomingCall', { callerId }); // Notify the receiver
+  });
+
+  // Accept a call
+  socket.on('acceptCall', ({ callerId, receiverId }) => {
+    if (!callerId || !receiverId) {
+      console.error('CallerId or ReceiverId is missing for acceptCall');
+      return;
+    }
+    console.log(`Call accepted by ${receiverId}`);
+    io.to(callerId).emit('callAccepted', { receiverId });
+  });
+
+  // Reject a call
+  socket.on('rejectCall', ({ callerId, receiverId }) => {
+    if (!callerId || !receiverId) {
+      console.error('CallerId or ReceiverId is missing for rejectCall');
+      return;
+    }
+    console.log(`Call rejected by ${receiverId}`);
+    io.to(callerId).emit('callRejected', { receiverId });
+  });
+
+  // End a call
+  socket.on('endCall', ({ callerId, receiverId }) => {
+    if (!callerId || !receiverId) {
+      console.error('CallerId or ReceiverId is missing for endCall');
+      return;
+    }
+    console.log(`Call ended between ${callerId} and ${receiverId}`);
+    io.to(callerId).emit('callEnded', { receiverId });
+    io.to(receiverId).emit('callEnded', { callerId });
   });
 
   socket.on('disconnect', () => {
@@ -82,6 +115,11 @@ import scheduleRoutes from './routes/scheduleRoutes';
 import quoteRoutes from './routes/quoteRoutes';
 import storyRoutes from './routes/storyRoutes';
 import aiResponseRoutes from './routes/aiResponseRoutes';
+import callRoutes from './routes/callRoutes';
+import counselorRoutes from './routes/counselorRoutes';
+import counselorPostRoutes from './routes/counselorPostRoutes';
+import counselorStoryRoutes from './routes/counselorStoryRoutes';
+import habitTrackerRoutes from './routes/habitTrackerRoutes';
 
 // Use routes
 app.use('/register', registrationRoutes);
@@ -95,7 +133,11 @@ app.use('/routines', scheduleRoutes);
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/stories', storyRoutes);
 app.use('/airesponse', aiResponseRoutes);
-
+app.use('/calls', callRoutes);
+app.use('/api/counselors', counselorRoutes);
+app.use('/api/counselorPosts', counselorPostRoutes);
+app.use('/api/counselorStories', counselorStoryRoutes);
+app.use('/habitTracker', habitTrackerRoutes);
 // Hugging Face API route
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
 
@@ -120,12 +162,11 @@ app.post('/airesponse', async (req, res) => {
           Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
         },
         params: {
-          max_length: 20, // Limit output length for concise responses
+          max_length: 20,
         },
       }
     );
 
-    // Ensure only the relevant data is returned
     const output = response.data[0]?.generated_text || 'No output generated';
     res.json({ output });
   } catch (err) {
@@ -139,7 +180,7 @@ app.post('/airesponse', async (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000; // Convert PORT to a number
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

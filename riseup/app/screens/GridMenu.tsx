@@ -29,6 +29,8 @@ const menuItems: MenuItem[] = [
   { title: 'Donation', icon: require('../../assets/donation.png'), route: 'habit/donation' },
   { title: 'Music', icon: require('../../assets/music.png'), route:'habit/urnotalone'  },
   { title: 'Stories', icon: require('../../assets/books.png'), route: 'habit/StoryFeedScreen' },
+  { title: 'counselling', icon: require('../../assets/counselling.png'), route: 'habit/VoiceCall' },
+  { title: 'Books', icon: require('../../assets/bookslogo.png'), route: 'habit/pdf' },
 ];
 
 export default function GridMenu() {

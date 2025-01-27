@@ -24,6 +24,9 @@ export default function RootLayout() {
   return (
     <Stack>
       {/* Ensure no headers are shown for the screens in the app */}
+      <Stack.Screen name="consultant" options={{ headerShown: false }} />
+      <Stack.Screen name="habit/urnotalone" options={{ headerShown: false }} />
+      <Stack.Screen name="habit/ChatMessagesScreen.tsx" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="habit/StoryFeedScreen" options={{ headerShown: false }} />
       <Stack.Screen name="screens" options={{ headerShown: false }} />

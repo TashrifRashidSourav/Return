@@ -57,22 +57,25 @@ const CampaignPage = () => {
       <View style={styles.paymentContainer}>
         <TouchableOpacity style={styles.paymentOption}>
           <Image
-            source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/2/2d/BKash-bKash-Logo.wine.png' }}
+            source={require('../../assets/Bkash.png')} // Replace with your bkash.png
             style={styles.icon}
+            resizeMode="contain"
           />
           <Text style={styles.paymentText}>bKash</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.paymentOption}>
           <Image
-            source={{ uri: 'https://nagad.com.bd/images/logo/nagad-logo-en.svg' }}
+            source={require('../../assets/Nagad.png')} // Replace with your nagad.png
             style={styles.icon}
+            resizeMode="contain"
           />
           <Text style={styles.paymentText}>Nagad</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.paymentOption}>
           <Image
-            source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/a/a4/Credit_card_font_awesome.svg' }}
+            source={require('../../assets/credit_card.png')} // Replace with your credit_card.png
             style={styles.icon}
+            resizeMode="contain"
           />
           <Text style={styles.paymentText}>Credit Card</Text>
         </TouchableOpacity>
@@ -135,16 +138,18 @@ const styles = StyleSheet.create({
   paymentOption: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: 80, // Ensure proper width for the icon
   },
   icon: {
-    width: 50,
-    height: 50,
+    width: 60, // Adjusted width
+    height: 60, // Adjusted height
     marginBottom: 8,
   },
   paymentText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#333',
+    textAlign: 'center',
   },
   submitButton: {
     backgroundColor: '#4caf50',

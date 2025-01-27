@@ -13,12 +13,11 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 
-const SERVER_URL = 'http://192.168.0.106:5000';
+const SERVER_URL = 'http://10.15.56.133:5000';
 
 const EditProfileScreen = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -46,7 +45,6 @@ const EditProfileScreen = () => {
       const data = await response.json();
       setUsername(data.name);
       setEmail(data.email);
-      setPhoneNumber(data.phoneNumber || '');
       setProfilePicture(data.profilePicture ? data.profilePicture : null);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to load profile data.');
@@ -86,7 +84,6 @@ const EditProfileScreen = () => {
       const formData = new FormData();
       if (username.trim()) formData.append('name', username.trim());
       if (email.trim()) formData.append('email', email.trim());
-      if (phoneNumber.trim()) formData.append('phoneNumber', phoneNumber.trim());
       if (profilePicture) {
         formData.append('profilePicture', {
           uri: profilePicture,
@@ -135,10 +132,6 @@ const EditProfileScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-        <Text style={styles.currentName}>Current Name: {username}</Text>
-      </View>
       <View style={styles.profilePictureContainer}>
         <TouchableOpacity onPress={handleChangePicture}>
           <Image
@@ -150,7 +143,11 @@ const EditProfileScreen = () => {
             style={styles.profilePicture}
           />
         </TouchableOpacity>
-        <Text style={styles.changePictureText}>Change Picture</Text>
+        <Text style={styles.username}>{username}</Text>
+        <Text style={styles.email}>{email}</Text>
+        <TouchableOpacity onPress={handleChangePicture}>
+          <Text style={styles.changePictureText}>Change Profile Picture</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.form}>
@@ -160,6 +157,7 @@ const EditProfileScreen = () => {
           value={username}
           onChangeText={setUsername}
           placeholder="Enter username"
+          placeholderTextColor="#999"
         />
 
         <Text style={styles.label}>Email</Text>
@@ -169,15 +167,7 @@ const EditProfileScreen = () => {
           onChangeText={setEmail}
           placeholder="Enter email"
           keyboardType="email-address"
-        />
-
-        <Text style={styles.label}>Phone Number</Text>
-        <TextInput
-          style={styles.input}
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-          placeholder="Enter phone number"
-          keyboardType="phone-pad"
+          placeholderTextColor="#999"
         />
 
         <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
@@ -189,47 +179,81 @@ const EditProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F4F4F4' },
-  contentContainer: { alignItems: 'center', paddingBottom: 20 },
-  header: {
-    height: 200,
-    backgroundColor: '#007BFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+  container: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
   },
-  headerTitle: { color: '#FFFFFF', fontSize: 24, fontWeight: 'bold' },
-  currentName: { color: '#FFFFFF', fontSize: 16, marginTop: 10 },
-  profilePictureContainer: { marginTop: -70, alignItems: 'center' },
+  contentContainer: {
+    alignItems: 'center',
+    paddingBottom: 20,
+  },
+  profilePictureContainer: {
+    alignItems: 'center',
+    marginTop: 30,
+    marginBottom: 20,
+  },
   profilePicture: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#007BFF',
   },
-  changePictureText: { marginTop: 10, fontSize: 16, color: '#007BFF' },
-  form: { width: '90%', marginTop: 20 },
-  label: { fontSize: 16, marginBottom: 5, color: '#333333', fontWeight: '600' },
+  username: {
+    marginTop: 10,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  email: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 5,
+  },
+  changePictureText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#007BFF',
+    textDecorationLine: 'underline',
+  },
+  form: {
+    width: '90%',
+    marginTop: 20,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#333333',
+    fontWeight: '600',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#CCCCCC',
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 12,
     marginBottom: 15,
     backgroundColor: '#FFFFFF',
     fontSize: 16,
+    color: '#333333',
   },
   updateButton: {
     backgroundColor: '#007BFF',
     paddingVertical: 15,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
     marginTop: 10,
   },
-  updateButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
-  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' },
+  updateButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
 });
 
 export default EditProfileScreen;

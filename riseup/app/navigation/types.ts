@@ -8,6 +8,9 @@ export type RootParamList = {
   'habit/RoutineManagerScreen': undefined;
   'habit/urnotalone': undefined;
   'habit/StoryFeedScreen': undefined;
+  'habit/VoiceCall': undefined;
+  'habit/PDFViewer': undefined;
+  'habit/pdf': undefined;
   // Updated Routes for Stories
   StoryFeed: undefined; // No parameters for StoryFeed
   StoryDetail: { storyId: string }; // Accepts `storyId` as a parameter

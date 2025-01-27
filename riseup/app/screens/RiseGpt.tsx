@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   SafeAreaView,
   TextInput,
-  Button,
+  TouchableOpacity,
   Text,
   StyleSheet,
   View,
@@ -13,27 +13,27 @@ import axios from 'axios';
 
 const App = () => {
   const [input, setInput] = useState('');
-  const [response, setResponse] = useState('');
+  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchResponse = async () => {
     if (!input.trim()) {
-      alert('Please enter input.');
+      alert('Please type your message.');
       return;
     }
 
+    // Add user message to the chat
+    const newMessage = { sender: 'user', text: input };
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    setInput(''); // Clear input field
     setLoading(true);
-    setResponse(''); // Clear previous response
 
     try {
-      const res = await axios.post('http://192.168.0.106:5000/airesponse', { input }); // Adjust for your backend IP
-      setResponse(res.data.output); // Set the new response
+      const res = await axios.post('http://10.15.56.133:5000/airesponse', { input }); // Adjust backend IP
+      const aiMessage = { sender: 'ai', text: res.data.output };
+      setMessages((prevMessages) => [...prevMessages, aiMessage]); // Add AI response to the chat
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Axios error:', error.response?.data || error.message);
-      } else {
-        console.error('Unexpected error:', error);
-      }
+      console.error('Error fetching response:', error);
       alert('Failed to fetch response. Please try again.');
     } finally {
       setLoading(false);
@@ -42,24 +42,48 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>AI Chat Assistant</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>RiseGPT</Text>
+      </View>
+
+      {/* Chat Container */}
+      <ScrollView
+        style={styles.chatContainer}
+        contentContainerStyle={styles.chatContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {messages.map((message, index) => (
+          <View
+            key={index}
+            style={[
+              styles.message,
+              message.sender === 'user' ? styles.userMessage : styles.aiMessage,
+            ]}
+          >
+            <Text style={styles.messageText}>{message.text}</Text>
+          </View>
+        ))}
+        {loading && (
+          <View style={[styles.message, styles.aiMessage]}>
+            <ActivityIndicator size="small" color="#4CAF50" />
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Input Section */}
+      <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Type your question..."
+          placeholder="Type your message..."
           value={input}
           onChangeText={setInput}
           multiline
         />
-        <Button title="Get Response" onPress={fetchResponse} disabled={loading} />
-        {loading && <ActivityIndicator size="large" color="#007AFF" style={styles.loader} />}
-        {response && (
-          <View style={styles.responseContainer}>
-            <Text style={styles.responseTitle}>AI Response:</Text>
-            <Text style={styles.response}>{response}</Text>
-          </View>
-        )}
-      </ScrollView>
+        <TouchableOpacity style={styles.sendButton} onPress={fetchResponse} disabled={loading}>
+          <Text style={styles.sendButtonText}>Send</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -69,47 +93,76 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
+  header: {
+    height: 60,
+    backgroundColor: '#4CAF50',
     justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
-  title: {
-    fontSize: 24,
+  headerTitle: {
+    color: '#fff',
+    fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
+  },
+  chatContainer: {
+    flex: 1,
+    padding: 10,
+  },
+  chatContent: {
+    justifyContent: 'flex-start',
+  },
+  message: {
+    maxWidth: '75%',
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 5,
+  },
+  userMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#FFEB3B', // Yellow for user
+    borderTopRightRadius: 0,
+  },
+  aiMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#4CAF50', // Green for AI
+    borderTopLeftRadius: 0,
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    padding: 10,
+    borderTopWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
   },
   input: {
+    flex: 1,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    fontSize: 16,
     backgroundColor: '#fff',
+  },
+  sendButton: {
+    marginLeft: 10,
+    backgroundColor: '#4CAF50',
+    borderRadius: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendButtonText: {
+    color: '#fff',
     fontSize: 16,
-    marginBottom: 20,
-    textAlignVertical: 'top',
-    minHeight: 60,
-  },
-  loader: {
-    marginTop: 20,
-  },
-  responseContainer: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: '#e6f7ff',
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  responseTitle: {
-    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  response: {
-    fontSize: 16,
-    lineHeight: 24,
   },
 });
 

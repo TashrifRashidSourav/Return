@@ -9,11 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image
+  Image,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker'; // Import the picker
 import { useRouter } from 'expo-router';
 import * as Network from 'expo-network';
-import AsyncStorage from '@react-native-async-storage/async-storage';  // Add AsyncStorage for token storage
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Add AsyncStorage for token storage
 import { MaterialIcons } from '@expo/vector-icons';
 
 const LoginScreen = () => {
@@ -21,6 +22,7 @@ const LoginScreen = () => {
   const [baseURL, setBaseURL] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('user'); // Default role is 'user'
 
   // Fetch IP address on component mount
   useEffect(() => {
@@ -30,7 +32,7 @@ const LoginScreen = () => {
         console.log('Detected IP Address:', ipAddress);
 
         if (ipAddress) {
-          const apiBase = `http://192.168.0.106:5000`;  // Use dynamic IP
+          const apiBase = `http://192.168.0.101:5000`; // Use dynamic IP
           setBaseURL(apiBase);
         } else {
           Alert.alert('Error', 'Unable to fetch IP address.');
@@ -51,20 +53,33 @@ const LoginScreen = () => {
     }
 
     try {
+      // Check for predefined credentials
+      if (email === 'con@gmail.com' && password === '12345678') {
+        Alert.alert('Success', 'Login successful!');
+        router.push('/consultant/counselor'); // Redirect to counselor.tsx
+        return;
+      }
+
       // Send login request to backend
       const response = await fetch(`${baseURL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, role }), // Include role in the request
       });
 
       const result = await response.json();
       if (response.ok) {
-        await AsyncStorage.setItem('authToken', result.token);  // Store the JWT token
+        await AsyncStorage.setItem('authToken', result.token); // Store the JWT token
         Alert.alert('Success', 'Login successful!');
-        router.push('../screens/Post'); // Redirect to profile or desired page
+
+        // Redirect based on the role
+        if (role === 'counselor') {
+          router.push('/consultant/counselor'); // Redirect to counselor dashboard
+        } else {
+          router.push('../screens/Post'); // Redirect to normal user dashboard
+        }
       } else {
         Alert.alert('Error', result.message || 'Invalid credentials.');
       }
@@ -84,7 +99,7 @@ const LoginScreen = () => {
           {/* Logo Image at the top */}
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../images/icon.png')} 
+              source={require('../../images/icon.png')}
               style={styles.logo}
             />
           </View>
@@ -118,6 +133,19 @@ const LoginScreen = () => {
               />
             </View>
 
+            {/* Role Dropdown */}
+            <View style={styles.inputWrapper}>
+              <MaterialIcons name="person" size={20} color="#6c757d" />
+              <Picker
+                selectedValue={role}
+                style={styles.picker}
+                onValueChange={(itemValue: string) => setRole(itemValue)} // Properly typed
+              >
+                <Picker.Item label="User" value="user" />
+                <Picker.Item label="Counselor" value="counselor" />
+              </Picker>
+            </View>
+
             {/* Login Button */}
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.loginButtonText}>SIGN IN</Text>
@@ -127,19 +155,19 @@ const LoginScreen = () => {
             <View style={styles.socialMediaContainer}>
               <TouchableOpacity style={styles.socialButton}>
                 <Image
-                  source={require('../../images/google.png')} // Replace with your Google icon
+                  source={require('../../images/google.png')}
                   style={styles.socialIcon}
                 />
               </TouchableOpacity>
               <TouchableOpacity style={styles.socialButton}>
                 <Image
-                  source={require('../../images/facebook.png')} // Replace with your Facebook icon
+                  source={require('../../images/facebook.png')}
                   style={styles.socialIcon}
                 />
               </TouchableOpacity>
               <TouchableOpacity style={styles.socialButton}>
                 <Image
-                  source={require('../../images/twitter.png')} // Replace with your Twitter icon
+                  source={require('../../images/twitter.png')}
                   style={styles.socialIcon}
                 />
               </TouchableOpacity>
@@ -202,6 +230,11 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
     color: '#000',
+  },
+  picker: {
+    flex: 1,
+    marginLeft: 10,
+    color: '#6c757d',
   },
   loginButton: {
     backgroundColor: '#28a745', // Green

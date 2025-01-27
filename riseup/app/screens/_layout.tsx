@@ -3,6 +3,7 @@ import React from 'react';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon'; // Ensure this component exists and works
 import { Colors } from '@/constants/Colors'; // Ensure this is properly defined
 import { useColorScheme } from '@/hooks/useColorScheme'; // Ensure this is properly defined
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -49,6 +50,31 @@ export default function TabLayout() {
         }}
       />
 
+<Tabs.Screen
+  name="GridMenu"
+  options={{
+    title: 'Menu', // Title for the GridMenu screen
+    headerShown: false, // No header for this screen
+    tabBarIcon: ({ color, focused }) => (
+      <TabBarIcon name={focused ? 'grid' : 'grid-outline'} color={color} />
+    ), // Uses Ionicons grid icons for a grid menu feel
+  }}
+/>
+<Tabs.Screen
+  name="RiseGpt"
+  options={{
+    title: 'RiseGPT',
+    headerShown: false,
+    tabBarIcon: ({ color, focused }) => (
+      <TabBarIcon name="logo-android" color={color} />
+    ),
+  }}
+/>
+
+
+
+      
+
       {/* Update Profile Screen */}
       <Tabs.Screen
         name="updateprofile"
@@ -85,6 +111,24 @@ export default function TabLayout() {
           ), // Using calendar icons for Routine
         }}
       />
+
+            {/* Routine Manager Screen */}
+            <Tabs.Screen
+  name="HabitTracker"
+  options={{
+    title: 'Track',
+    headerShown: false, // No header for Habit Tracker
+    tabBarIcon: ({ color, focused }) => (
+      <TabBarIcon
+        name={focused ? 'analytics' : 'stats-chart-outline'} // Compatible Ionicons icons
+        color={color}
+      />
+    ),
+  }}
+/>
+
+
+
 
 <Tabs.Screen
         name="scheduleai"

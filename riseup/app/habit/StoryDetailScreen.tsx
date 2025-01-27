@@ -20,7 +20,7 @@ const StoryDetailScreen: React.FC = () => {
           console.error('No storyId provided');
           return;
         }
-        const response = await axios.get(`http://192.168.0.106:5000/api/stories/${storyId}`);
+        const response = await axios.get(`http://10.15.56.133:5000/api/stories/${storyId}`);
         setStory(response.data);
       } catch (error) {
         console.error('Failed to fetch story:', error);
